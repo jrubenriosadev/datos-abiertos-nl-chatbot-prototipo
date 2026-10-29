@@ -1,0 +1,246 @@
+/* ==========================================================
+   Widget de chat: botón flotante + ventana emergente.
+   Todo va con el prefijo .dchat- para no chocar con otra página.
+   Los colores se pueden cambiar con variables CSS en :root.
+   ========================================================== */
+
+.dchat-root {
+  --dchat-ink: var(--ink, #17282B);
+  --dchat-teal: var(--teal, #0E7C74);
+  --dchat-teal-dark: var(--teal-dark, #0A5A54);
+  --dchat-sun: var(--sun, #F4B942);
+  --dchat-mist: var(--mist, #E8F0EE);
+  --dchat-line: var(--line, #C9D8D5);
+  --dchat-font: var(--font-body, "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif);
+  --dchat-font-display: var(--font-display, "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif);
+
+  font-family: var(--dchat-font);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--dchat-ink);
+}
+
+.dchat-root *, .dchat-root *::before, .dchat-root *::after { box-sizing: border-box; }
+
+/* ---------- Botón flotante (abajo a la derecha) ---------- */
+.dchat-launcher {
+  position: fixed; right: 20px; bottom: 20px; z-index: 2147483000;
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 56px; padding: 0 22px 0 16px;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--dchat-teal); color: #fff;
+  font: 700 1rem/1 var(--dchat-font);
+  box-shadow: 0 6px 18px rgba(23, 40, 43, 0.28);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.dchat-launcher:hover { background: var(--dchat-teal-dark); }
+.dchat-launcher:active { transform: scale(0.98); }
+.dchat-launcher:focus-visible { outline: 3px solid var(--dchat-ink); outline-offset: 3px; }
+.dchat-launcher[aria-expanded="true"] { display: none; }
+
+.dchat-avatar {
+  width: 32px; height: 32px; flex: none; border-radius: 50%;
+  background: var(--dchat-sun); color: var(--dchat-ink);
+  display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.dchat-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dchat-avatar svg { width: 20px; height: 20px; }
+
+/* ---------- Ventana ---------- */
+.dchat-panel {
+  position: fixed; right: 20px; bottom: 20px; z-index: 2147483001;
+  /* Tamaño normal en computadora: hasta 560 × 780 px, sin salirse de la pantalla. */
+  width: min(560px, calc(100vw - 40px));
+  height: min(780px, calc(100vh - 40px));
+  height: min(780px, calc(100dvh - 40px));
+  display: none; flex-direction: column;
+  background: #fff; border-radius: 18px; overflow: hidden;
+  border: 1px solid var(--dchat-line);
+  box-shadow: 0 18px 48px rgba(23, 40, 43, 0.32);
+}
+.dchat-panel[data-open="true"] { display: flex; animation: dchat-in 0.18s ease-out; }
+/* Ampliada: casi toda la pantalla (botón del encabezado). */
+.dchat-panel[data-size="grande"] {
+  width: min(1000px, calc(100vw - 40px));
+  height: calc(100vh - 40px);
+  height: calc(100dvh - 40px);
+}
+
+@keyframes dchat-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.dchat-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 14px 14px 16px;
+  background: var(--dchat-ink); color: #fff;
+}
+.dchat-header .dchat-avatar { width: 40px; height: 40px; }
+.dchat-header .dchat-avatar svg { width: 24px; height: 24px; }
+.dchat-titles { flex: 1; min-width: 0; }
+.dchat-title { margin: 0; font: 800 1.1rem/1.2 var(--dchat-font-display); }
+.dchat-subtitle { margin: 2px 0 0; font-size: 0.85rem; color: #C7D6D3; }
+.dchat-close {
+  flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%;
+  background: transparent; color: #fff; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.dchat-close:hover { background: rgba(255, 255, 255, 0.14); }
+.dchat-close:focus-visible { outline: 3px solid var(--dchat-sun); outline-offset: 2px; }
+.dchat-close svg { width: 20px; height: 20px; }
+
+/* ---------- Mensajes ---------- */
+.dchat-messages {
+  flex: 1; overflow-y: auto; padding: 16px;
+  background: var(--dchat-mist);
+  display: flex; flex-direction: column; gap: 12px;
+  scroll-behavior: smooth;
+}
+
+.dchat-msg { max-width: 92%; padding: 11px 14px; border-radius: 16px; word-wrap: break-word; overflow-wrap: anywhere; }
+.dchat-msg p { margin: 0 0 8px; }
+.dchat-msg p:last-child { margin-bottom: 0; }
+.dchat-msg ul { margin: 0 0 8px; padding-left: 20px; }
+.dchat-msg--bot { align-self: flex-start; background: #fff; border: 1px solid var(--dchat-line); border-bottom-left-radius: 4px; }
+.dchat-msg--user { align-self: flex-end; background: var(--dchat-teal); color: #fff; border-bottom-right-radius: 4px; }
+.dchat-msg--error { align-self: flex-start; background: #FFF3E0; border: 1px solid #E8B96B; border-bottom-left-radius: 4px; }
+/* Mensajes de apoyo (protocolo de crisis): tono cálido y teléfonos fáciles de tocar. */
+.dchat-msg--apoyo { background: #F2F8F6; border-color: #9CC5B8; }
+.dchat-apoyo { margin-top: 10px; padding: 8px 12px; background: #fff; border: 1px solid #9CC5B8; border-radius: 10px; }
+.dchat-apoyo-title { margin: 0 0 4px; font-weight: 700; font-size: 0.9rem; }
+.dchat-apoyo ul { margin: 0; padding-left: 18px; }
+.dchat-apoyo li { margin-bottom: 4px; }
+.dchat-apoyo a { color: #1F5E4F; font-weight: 700; text-decoration: underline; }
+.dchat-source { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--dchat-line); font-size: 0.85rem; color: #4A5E61; }
+
+/* Indicador "escribiendo…" */
+.dchat-typing { display: inline-flex; gap: 5px; padding: 4px 2px; }
+.dchat-typing span {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--dchat-teal);
+  animation: dchat-bounce 1s infinite ease-in-out;
+}
+.dchat-typing span:nth-child(2) { animation-delay: 0.15s; }
+.dchat-typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dchat-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+  40% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ---------- Gráfica de barras (versión sin librerías) ---------- */
+.dchat-chart { margin: 10px 0 0; padding: 12px; background: var(--dchat-mist); border-radius: 12px; }
+.dchat-chart figcaption { font-weight: 700; margin-bottom: 10px; }
+.dchat-bars { display: grid; gap: 8px; }
+.dchat-bar-row { display: grid; grid-template-columns: minmax(90px, 42%) 1fr auto; gap: 8px; align-items: center; font-size: 0.88rem; }
+/* Las etiquetas largas se parten en varias líneas en lugar de cortarse con "…". */
+.dchat-bar-label { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+.dchat-bar-track { background: #fff; border-radius: 4px; height: 18px; overflow: hidden; }
+.dchat-bar-fill { height: 100%; background: var(--dchat-teal); border-radius: 4px; }
+.dchat-bar-value { font-variant-numeric: tabular-nums; font-weight: 700; }
+/* Colores de las series (barras agrupadas y apiladas) */
+.dchat-serie-0 { background: var(--dchat-teal); }
+.dchat-serie-1 { background: var(--dchat-sun); }
+.dchat-serie-2 { background: var(--dchat-ink); }
+.dchat-serie-3 { background: #C2552D; }
+.dchat-serie-4 { background: #5B6CC2; }
+.dchat-serie-5 { background: #7D8C24; }
+.dchat-serie-6 { background: #B04A8C; }
+.dchat-serie-7 { background: #6B7E81; }
+
+/* Barras marcadas (por ejemplo, meses incompletos): con trama diagonal */
+.dchat-bar--marcada {
+  background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.6) 0 4px, transparent 4px 8px);
+  opacity: 0.75;
+}
+
+.dchat-legend { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.85rem; }
+.dchat-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.dchat-swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+
+/* Agrupadas: una barra delgada por serie dentro de cada categoría */
+.dchat-bar-row--group { grid-template-columns: minmax(90px, 42%) 1fr; align-items: start; }
+.dchat-bar-group { display: grid; gap: 3px; }
+.dchat-bar-sub { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.dchat-bar-track--thin { height: 11px; }
+.dchat-bar-sub .dchat-bar-value { font-size: 0.8rem; }
+
+/* Apiladas: segmentos uno tras otro dentro de la misma barra */
+.dchat-bar-track--stack { display: flex; }
+.dchat-bar-track--stack .dchat-bar-fill { border-radius: 0; }
+
+/* Verticales */
+.dchat-cols { display: flex; align-items: stretch; gap: 6px; height: 180px; }
+.dchat-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+.dchat-col-plot { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.dchat-col-plot .dchat-bar-fill { width: 100%; max-width: 46px; min-height: 2px; border-radius: 4px 4px 0 0; }
+.dchat-col-value { font-size: 0.72rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; margin-bottom: 2px; }
+.dchat-col-label {
+  margin-top: 4px; font-size: 0.75rem; text-align: center; line-height: 1.2;
+  white-space: normal; overflow-wrap: anywhere;
+}
+
+.dchat-chart-note { margin: 8px 0 0; font-size: 0.8rem; color: #4A5E61; }
+
+/* Aclaraciones del backend */
+.dchat-notes { margin-top: 10px; padding: 8px 12px; background: #FFF8E6; border: 1px solid #EBCB80; border-radius: 10px; font-size: 0.85rem; }
+.dchat-notes summary { cursor: pointer; font-weight: 700; }
+.dchat-notes ul { margin: 6px 0 0; padding-left: 18px; }
+.dchat-notes li { margin-bottom: 4px; }
+
+.dchat-chart details { margin-top: 10px; font-size: 0.88rem; }
+.dchat-chart summary { cursor: pointer; font-weight: 700; }
+.dchat-chart table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.dchat-chart th, .dchat-chart td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--dchat-line); }
+.dchat-chart td:last-child, .dchat-chart th:last-child { text-align: right; }
+
+/* ---------- Ejemplos y formulario ---------- */
+.dchat-suggestions { display: flex; flex-direction: column; gap: 8px; padding: 0 16px 12px; background: var(--dchat-mist); }
+.dchat-suggestions[hidden] { display: none; }
+.dchat-suggestion {
+  font: inherit; font-size: 0.95rem; text-align: left; cursor: pointer;
+  padding: 9px 14px; border-radius: 999px;
+  background: #fff; color: var(--dchat-ink); border: 1.5px solid var(--dchat-teal);
+}
+.dchat-suggestion:hover { background: var(--dchat-teal); color: #fff; }
+.dchat-suggestion:focus-visible { outline: 3px solid var(--dchat-ink); outline-offset: 2px; }
+
+.dchat-form { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--dchat-line); background: #fff; }
+.dchat-input {
+  flex: 1; min-width: 0; font: inherit; padding: 12px 14px;
+  border: 1.5px solid #8AA3A0; border-radius: 12px; color: var(--dchat-ink); background: #fff;
+}
+.dchat-input:focus-visible { outline: 3px solid var(--dchat-ink); outline-offset: 1px; border-color: var(--dchat-ink); }
+.dchat-send {
+  flex: none; border: 0; border-radius: 12px; padding: 0 18px; cursor: pointer;
+  background: var(--dchat-teal); color: #fff; font: 700 1rem var(--dchat-font);
+}
+.dchat-send:hover:not(:disabled) { background: var(--dchat-teal-dark); }
+.dchat-send:disabled, .dchat-input:disabled { opacity: 0.6; cursor: not-allowed; }
+.dchat-send:focus-visible { outline: 3px solid var(--dchat-ink); outline-offset: 2px; }
+
+.dchat-hint { margin: 0; padding: 0 16px 10px; background: #fff; font-size: 0.78rem; color: #4A5E61; }
+
+/* Solo para lectores de pantalla */
+.dchat-sr-only {
+  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ---------- Pantallas pequeñas: ocupa casi toda la pantalla ---------- */
+/* Tabla de respaldo (cuando no se pudo dibujar la gráfica) */
+.dchat-table table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.dchat-table th, .dchat-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--dchat-line); overflow-wrap: anywhere; }
+.dchat-table td:not(:first-child), .dchat-table th:not(:first-child) { text-align: right; white-space: nowrap; }
+
+@media (max-width: 480px) {
+  .dchat-panel, .dchat-panel[data-size="grande"] { right: 0; bottom: 0; width: 100vw; height: 100dvh; border-radius: 0; border: 0; }
+  .dchat-size { display: none; }
+  .dchat-launcher { right: 14px; bottom: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dchat-panel[data-open="true"] { animation: none; }
+  .dchat-typing span { animation: none; opacity: 0.8; }
+  .dchat-messages { scroll-behavior: auto; }
+  .dchat-launcher { transition: none; }
+}

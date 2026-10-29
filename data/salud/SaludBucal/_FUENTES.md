@@ -1,0 +1,42 @@
+# Fuentes: Salud
+
+## Conjunto de datos: Salud Bucal
+- **Nombre del conjunto de datos en el portal:** Salud Bucal
+- **Enlace de la página del conjunto de datos:** https://catalogodatos.nl.gob.mx/dataset/salud-bucal
+- **Institución que lo publica:** Dirección de Planeación (gerardo.balderas@saludnl.gob.mx)
+- **Mantenedor:** Francisco Antonio Carrizales Cavazos (francisco.carrizales@saludnl.gob.mx)
+- **Fecha de descarga:** 29/10/26
+- **Periodo que cubre (según el portal):** 2024-2025 y 2025-2026
+- **Periodo que cubren los archivos (verificado en los datos el 29/10/26):** del 1 de octubre de 2024 al 30 de septiembre de 2026, **sin datos de septiembre de 2025** (el mismo hueco que Consulta General): la publicación 2024-2025 termina el 29/08/2025 y la 2025-2026 empieza el 01/10/2025. Agosto de 2025 (último mes antes del hueco) y agosto de 2026 pueden tener rezago de captura; septiembre de 2026 está claramente incompleto (856 consultas). Noviembre de 2025 a enero de 2026 salen bajos, pero arriba del umbral de "incompleto". La ingesta recalcula todo esto cada vez (ver `build/reporte_ingesta.md`).
+- **Fuente original:** http://www.dgis.salud.gob.mx/contenidos/basesdedatos/bdc_serviciossis_gobmx.html
+- **Qué contiene, en una frase:** Consultas del servicio de salud bucal (dental), una fila por consulta, con edad, sexo, municipio y unidad médica, y el diagnóstico de boca y dientes clasificado con la CIE-10.
+- **Archivos:**
+  - `2024_2025_salud_bucal_parte1.csv` (49,999 filas, 01/10/2024 a 31/03/2025) y `parte2.csv` (67,896 filas, 01/03/2025 a 29/08/2025). UTF-8 con BOM, sin acentos.
+  - `2025_2026_salud_bucal_parte1.csv` (49,999 filas, 01/10/2025 a 17/03/2026) y `parte2.csv` (60,200 filas, 17/03/2026 a 30/09/2026). ASCII (se lee como UTF-8).
+  - En total: 228,094 filas leídas; 228,093 al quitar 1 fila idéntica. Separador coma.
+  - Las dos "parte1" traen exactamente 49,999 filas (parece un corte de exportación a 50,000 líneas), pero los identificadores siguen sin saltos entre parte 1 y parte 2: no falta ninguna fila.
+  - Las mismas 14 columnas en ambos periodos, con los **mismos tres nombres distintos** que Consulta General en 2024-2025: `fecha`, `edad_anos` y `clave_grupo_ enfermedad` (con un espacio). Se unifican en `dataset.toml` (`[archivos.equivalencias]`).
+  - `diccionario_2024_2025_salud_bucal.csv`: diccionario de datos oficial (https://catalogodatos.nl.gob.mx/dataset/salud-bucal/resource/809cb999-9463-4a9d-905f-53443e713e7e). Es documentación, no datos. Usa otros nombres de columna (`edad_años`, `descripción_…`).
+- **Cobertura geográfica:** 47 de los 51 municipios de Nuevo León (faltan Los Aldamas, Doctor Coss, General Zaragoza y Melchor Ocampo). Monterrey concentra el 44.1% de las consultas; 17 municipios tienen menos de 1,000 consultas en los dos años.
+- **Diccionario de datos (oficial):**
+  - `fecha`/`fecha_consulta`: fecha de consulta (dd/mm/aaaa, sin hora).
+  - `id_consulta`: identificador único de la consulta (no de la persona). La numeración `SB_<año>_n` se reinicia: 27,315 identificadores `SB_2025_*` aparecen en ambas publicaciones con datos distintos (no son duplicados).
+  - `edad_anos`/`edad`: edad en años. `edad_meses` y `edad_dias` solo aplican a menores de 1 año (así viene en los datos).
+  - `sexo`: el diccionario indica Femenino/Masculino; los datos también traen INTERSEXUAL (12 consultas).
+  - `peso` (kg) y `altura` (cm).
+  - `municipio_unidad_medica` e `institucion_unidad_medica`: municipio y nombre de la unidad donde se atendió.
+  - `clave_grupo_enfermedad` / `descripcion_grupo_enfermedad`: grupo de enfermedad según la CIE-10.
+  - `clave_enfermedad` / `descripcion_enfermedad`: clave de la CIE-10 (152 claves distintas, todas con el formato esperado).
+- **Columnas que no se entienden o códigos sin explicación:**
+  - Las enfermedades de boca y dientes (K00 a K14) están en el grupo XI de la CIE-10, "Enfermedades del sistema digestivo" (77.7% de las consultas). Se explica en las reglas para que nadie lea "sistema digestivo" como estómago.
+  - El grupo XXI (20.0%) no son enfermedades: exámenes odontológicos, pruebas de prótesis y de aparatos de ortodoncia.
+  - El grupo XIX (traumatismos) es casi todo fractura de dientes.
+- **Problemas que notaste:**
+  - **¿Una fila es una visita?** 4,921 filas son idénticas en todo salvo el identificador, y hay visitas (misma fecha, unidad, edad, sexo, peso y altura) con varias filas, muchas con diagnósticos distintos (por ejemplo, caries y examen odontológico). Una visita puede generar varios registros, o puede haber duplicados de captura; con los datos no se distingue. Se conservan todas y se habla de "consultas registradas".
+  - `peso` y `altura`: 9,323 traen el texto `null`, 480 pesos y 1,030 alturas valen 999 (marcador de dato faltante), 302 adultos con menos de 30 kg y 937 con menos de 100 cm. No se ofrecen.
+  - `edad`: 2 vacías y 7 mayores de 100 años (máximo: 113).
+  - Las unidades se escriben distinto en cada periodo (`CSU FRANCISCO VILLA` contra `C S U  FRANCISCO VILLA`), y la unificación sin signos no las junta (solo 40 de 197 nombres aparecen en ambos periodos). Por eso, y porque en centros pequeños el cruce de unidad y edad podría identificar a menores, **la unidad médica no se ofrece** en este conjunto.
+  - Dobles espacios donde se perdieron las comas; 14 claves y 3 grupos aparecen con y sin ese doble espacio. Errata de origen: "ESTRUTURAS" (K089).
+  - 1 fila idéntica en la unión de las partes 1 y 2 de 2024-2025 (se elimina en la ingesta).
+  - El 39.1% de las consultas son de menores de 18 años: al cruzar municipio con edad, el mínimo de privacidad sube a 20 consultas (`[[privacidad.combinaciones]]`).
+  - Son registros distintos de Consulta General (solo 35 coinciden en fecha, municipio, edad, sexo, peso, altura y diagnóstico), aunque Consulta General también tiene diagnósticos de boca y dientes. No se suman ni se comparan.

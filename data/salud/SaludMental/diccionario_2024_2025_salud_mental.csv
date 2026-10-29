@@ -1,0 +1,21 @@
+﻿Nombre de la base y/o conjunto de datos,Etiqueta del campo o variable,Descripcion,"Tipo de dato
+","Rango o valores que permite el campo
+
+","Especificaciones y/o reglas de cálculo
+"
+2024_2025_salud_mental,fecha,Fecha de consulta.,Alfanumerico,hh:mm:ss UTC - 6,Formato datetime UTC - 6
+2024_2025_salud_mental,id_consulta,Identificador único de la consulta,Alfanumerico,,"puede ser un número, combinación de números, clave, etc. "
+2024_2025_salud_mental,edad_años,"Edad del paciente en años, número",Numero,Carcteres comprendidos en el rango 0-9,
+2024_2025_salud_mental,edad_meses,"Edad paciente menor de un año en meses, número",Numero,,Aplica solo para menores de 1 año
+2024_2025_salud_mental,edad_dias,"Edad paciente menor a un mes en días, número",Numero,,Aplica solo para menores de 1 mes
+2024_2025_salud_mental,sexo,Sexo del paciente que recibio la atención,Texto,Femenino/Masculino,
+2024_2025_salud_mental,peso,Peso en kg del paciente que recibio la atención,Numero,Carcteres comprendidos en el rango 0-9,En kg
+2024_2025_salud_mental,altura,Altura en cm del paciente que recibio la atención,Numero,Carcteres comprendidos en el rango 0-9,En cm
+2024_2025_salud_mental,municipio_unidad_medica,Municipio donde se atendió,Texto,Catalogo de municipios del Estado de Nuevo Leon,
+2024_2025_salud_mental,institucion_unidad_medica,Nombre de la institución médica donde se atendió,Alfanumerico,Catalogo de unidades que brindan atención medica,
+2024_2025_salud_mental,clave_grupo_ enfermedad,Clave del grupo de enfermedad según el CIE 10,Alfanumerico,Catalogo del grupo de enfermedad según el CIE 10,En caso de detección de enfermedad
+2024_2025_salud_mental,descripción_grupo_enfermedad,Descripción del grupo de enfermedad según según el CIE 10,Texto,,En caso de detección de enfermedad
+2024_2025_salud_mental,clave_enfermedad,Clave de la enfermedad deacuerdo con la Clasificación Internacional de Enfermedades (CIE-10),Alfanumerico,Catalogo de claves de enfermedades según el CIE 10,En caso de detección de enfermedad
+2024_2025_salud_mental,descripción_enfermedad,"Descripción de la enfermedad según el CIE 10
+
+",Texto,,En caso de detección de enfermedad

@@ -1,0 +1,35 @@
+# ==========================================================
+# Categorías del portal. Una categoría sin datasets (subcarpetas con CSV
+# y dataset.toml) se muestra automáticamente como "próximamente".
+# Las palabras clave sirven para reconocer preguntas de cada categoría.
+# Se comparan sin acentos y en minúsculas.
+# ==========================================================
+
+[[categorias]]
+id = "educacion"
+nombre = "Educación"
+descripcion = "Escuelas, alumnos y docentes por nivel y municipio."
+palabras_clave = [
+  "educacion", "educativo", "educativa", "escuela", "escuelas", "alumno", "alumnos", "alumna", "alumnas",
+  "estudiante", "estudiantes", "maestro", "maestros", "maestra", "maestras", "docente", "docentes",
+  "profesor", "profesores", "primaria", "primarias", "secundaria", "secundarias", "preparatoria",
+  "preparatorias", "bachillerato", "universidad", "universidades", "kinder", "preescolar", "matricula",
+  "desercion escolar", "reprobacion", "becas", "sep", "planteles", "plantel"
+]
+
+[[categorias]]
+id = "salud"
+nombre = "Salud"
+descripcion = "Servicios, unidades médicas y atención registrada."
+palabras_clave = ["salud", "consulta", "consultas", "enfermedad", "enfermedades", "medico", "medica"]
+
+[[categorias]]
+id = "seguridad"
+nombre = "Seguridad"
+descripcion = "Incidentes y denuncias registrados, con su evolución en el tiempo y por zona."
+palabras_clave = [
+  "seguridad publica", "delito", "delitos", "delictiva", "delictivo", "denuncia", "denuncias", "robo", "robos",
+  "homicidio", "homicidios", "policia", "policias", "crimen", "crimenes", "criminalidad", "asalto", "asaltos",
+  "secuestro", "secuestros", "fiscalia", "carpetas de investigacion", "feminicidio", "feminicidios",
+  "extorsion", "incidencia delictiva", "inseguridad"
+]

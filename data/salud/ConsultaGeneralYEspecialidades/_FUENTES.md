@@ -1,0 +1,38 @@
+# Fuentes: Salud
+
+## Conjunto de datos: Consulta General y Especialidades
+- **Nombre del conjunto de datos en el portal:** Consulta General y Especialidades
+- **Enlace de la página del conjunto de datos:** https://catalogodatos.nl.gob.mx/dataset/consulta-general-y-especialidades
+- **Institución que lo publica:** Dirección de Planeación (gerardo.balderas@saludnl.gob.mx)
+- **Mantenedor:** Francisco Antonio Carrizales Cavazos (francisco.carrizales@saludnl.gob.mx)
+- **Fecha de descarga:** 28/10/26 (partes 22 a 33 de 2025-2026) y 29/10/26 (partes 1 a 21 de 2025-2026, 1 a 21 de 2024-2025 y diccionario)
+- **Periodo que cubre (según el portal):** 2024-2025 y 2025-2026
+- **Periodo que cubren los archivos (verificado en los datos el 29/10/26):** del 1 de octubre de 2024 al 30 de septiembre de 2026, **sin datos de septiembre de 2025**: la publicación 2024-2025 termina el 31/08/2025 y la 2025-2026 empieza el 01/10/2025. Agosto de 2025 (último mes antes del hueco) y agosto de 2026 pueden tener rezago de captura; septiembre de 2026 está claramente incompleto. La ingesta recalcula todo esto cada vez (ver `build/reporte_ingesta.md`).
+- **Fuente original:** http://www.dgis.salud.gob.mx/contenidos/basesdedatos/bdc_serviciossis_gobmx.html
+- **Qué contiene, en una frase:** Consultas generales y de especialidad, una fila por consulta, con edad, sexo, municipio y unidad médica, y el motivo de consulta clasificado por enfermedad (CIE-10).
+- **Archivos:**
+  - `2024_2025_consulta_general_y_especialidad_parte1.csv` a `parte21.csv`: 21 archivos, 1,033,922 filas, del 01/10/2024 al 31/08/2025. UTF-8 (sin acentos).
+  - `2025_2026_consulta_general_especialidad_parte1.csv` a `parte33.csv`: 33 archivos, 983,151 filas, del 01/10/2025 al 30/09/2026. ISO-8859-1 (latin-1).
+  - En total: 2,017,073 filas. Separador coma.
+  - Las mismas 14 columnas en ambos periodos, pero **tres se llaman distinto** en 2024-2025: `fecha` (= `fecha_consulta`), `edad_anos` (= `edad`) y `clave_grupo_ enfermedad`, con un espacio dentro (= `clave_grupo_enfermedad`). Se unifican en `dataset.toml` (`[archivos.equivalencias]`).
+  - `diccionario_2024_2025_consulta_general_y_especialidad.csv`: diccionario de datos oficial. Es documentación, no datos (`archivos.excluir`).
+- **Cobertura geográfica:** 50 municipios de Nuevo León (falta Los Aldamas en ambos periodos) y 417 unidades médicas (contando cada nombre con su municipio).
+- **Diccionario de datos (oficial, archivo `diccionario_2024_2025_...csv`):**
+  - `fecha`/`fecha_consulta`: fecha de consulta. El diccionario dice "datetime UTC-6", pero los archivos solo traen la fecha dd/mm/aaaa.
+  - `id_consulta`: identificador único de la consulta (no de la persona). La numeración `CE_<año>_n` se reinicia: 270,610 identificadores `CE_2025_*` aparecen en ambos periodos con datos distintos (no son duplicados).
+  - `edad_anos`/`edad`: edad en años. `edad_meses` aplica solo a menores de 1 año y `edad_dias` solo a menores de 1 mes.
+  - `sexo`: el diccionario indica Femenino/Masculino; los datos también traen INTERSEXUAL (256 casos).
+  - `peso` (kg) y `altura` (cm).
+  - `municipio_unidad_medica` e `institucion_unidad_medica`: municipio y nombre de la unidad donde se atendió.
+  - `clave_grupo_enfermedad` / `descripcion_grupo_enfermedad`: grupo de enfermedad **según la CIE-10** (22 capítulos, números romanos).
+  - `clave_enfermedad` / `descripcion_enfermedad`: clave **de la CIE-10** (6,289 claves distintas).
+- **Columnas que no se entienden o códigos sin explicación:** el grupo XIX incluye algunas claves U (fuera del rango habitual S-T de ese capítulo). El grupo "Factores que influyen en el estado de salud y contacto con los servicios de salud" no son enfermedades: son motivos de contacto como exámenes generales, control del niño sano y supervisión del embarazo (32.2% de las consultas).
+- **Problemas que notaste:**
+  - Vacíos: `peso` 4.0% y `altura` 7.1%.
+  - Valores dudosos: 11,752 adultos con peso menor a 30 kg, 18,643 con altura menor a 100 cm, 294 pesos mayores a 250 kg y 130 edades mayores a 100 (máximo: 120).
+  - Las unidades se escriben distinto en cada periodo (`C.S.U. ABASOLO` contra `C S U  ABASOLO`): se unifican sin signos (`unificar = "sin_signos"`). Además, 205 unidades solo aparecen en parte del periodo (pueden haber abierto, cerrado o cambiado de nombre; no se fusionan).
+  - 51 claves de enfermedad cambian de palabras entre periodos (por ejemplo, "TIPO DOS" contra "TIPO 2"); se muestra la descripción más reciente y la búsqueda usa todas.
+  - Textos en mayúsculas; 2024-2025 viene sin acentos y 2025-2026 con algunas "Ú". Con dobles espacios donde se perdieron las comas.
+  - No hay filas idénticas repetidas entre archivos ni fechas inválidas. En 2024-2025 las partes no están en orden cronológico (los rangos de fechas se enciman), pero no repiten filas.
+  - 22,835 combinaciones municipio-enfermedad tienen una sola consulta (riesgo de reidentificación si se muestran sin agrupar).
+  - Los datos son consultas, no personas, y no incluyen población, así que no permiten calcular tasas.

@@ -1,0 +1,22 @@
+# Secretos
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Base de datos local y catálogo generados a partir de los CSV
+build/
+*.duckdb
+*.sqlite
+*.db
+
+# Registros
+logs/
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db

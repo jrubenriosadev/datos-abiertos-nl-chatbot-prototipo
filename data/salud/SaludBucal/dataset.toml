@@ -1,0 +1,266 @@
+# ==========================================================
+# Configuración del conjunto de datos "Salud Bucal".
+# La lee backend/ingest.py. El código genérico no conoce este dataset:
+# todo lo específico (columnas, reglas, advertencias) vive aquí. Las reglas que valen
+# para todos los datasets de Salud están en data/salud/_comun.toml y se unen al ingerir.
+# Ojo con TOML: las claves sueltas (como siglas o reglas_interpretacion) deben ir
+# ANTES de la primera sección [..] o [[..]]; si van después, quedan dentro de esa sección.
+# ==========================================================
+
+id = "salud_bucal"                     # solo minúsculas, números y guion bajo
+categoria = "salud"                    # debe existir en data/categorias.toml
+nombre = "Salud Bucal"
+descripcion = "Consultas del servicio de salud bucal (dental) en unidades de la Secretaría de Salud de Nuevo León. Cada registro es una consulta (no una persona), con edad, sexo, municipio de la unidad y el diagnóstico de boca y dientes (CIE-10), como caries, gingivitis o examen odontológico."
+institucion = "Secretaría de Salud de Nuevo León, Dirección de Planeación"
+fuente_url = "https://catalogodatos.nl.gob.mx/dataset/salud-bucal"
+fuente_original_url = "http://www.dgis.salud.gob.mx/contenidos/basesdedatos/bdc_serviciossis_gobmx.html"
+cobertura_geografica = "Nuevo León, según el municipio de la unidad médica donde se dio la consulta (no el municipio donde vive la persona)."
+# Desempate en buscar_dataset: con la misma coincidencia gana Consulta General (prioridad 1).
+prioridad = 0
+
+# Palabras que ayudan a encontrar este dataset (buscar_dataset y filtro de alcance).
+# Son las que lo distinguen de Consulta General: en un empate de palabras, estas pesan más
+# que el vocabulario que la ingesta saca de los datos.
+palabras_clave = [
+  "salud bucal", "bucal", "bucales", "dental", "dentales", "dentista", "dentistas", "odontologia", "odontologo",
+  "odontologa", "odontologico", "odontologica", "odontologicos", "dientes", "diente", "muela", "muelas", "caries",
+  "encia", "encias", "gingivitis", "periodontitis", "periodontal", "boca", "ortodoncia", "brackets", "protesis dental",
+  "dentadura", "placa dentobacteriana", "sarro", "fractura de diente", "consulta", "consultas"
+]
+
+# Preguntas de ejemplo que se sugieren cuando alguien pide algo fuera de alcance.
+preguntas_ejemplo = [
+  "¿Cuáles son los problemas dentales más comunes en niñas y niños de 5 a 9 años?",
+  "¿Cuántas consultas dentales hubo cada mes?"
+]
+
+# Siglas que se conservan en mayúsculas al normalizar textos.
+siglas = ["VIH", "CSU", "CSR", "CS"]
+
+# ---------- Lo que NO hay en los datos (además de lo común de Salud) ----------
+datos_no_disponibles = [
+  "Procedimientos realizados (extracciones, limpiezas, resinas, endodoncias): solo está el diagnóstico.",
+  "Dientes o piezas afectadas.",
+  "Unidad médica: no se ofrece en este conjunto (ver columnas no disponibles)."
+]
+
+# ---------- Reglas propias (las comunes de Salud están en data/salud/_comun.toml) ----------
+reglas_interpretacion = [
+  "Este conjunto es el servicio de salud bucal (dental). Las preguntas sobre dientes, muelas, boca, encías, caries o dentista se responden con este conjunto. Las consultas con diagnósticos de boca o dientes de Consulta General y Especialidades son otros registros: no las sumes ni las compares con estas.",
+  "En la CIE-10, caries, gingivitis y demás enfermedades de la boca y los dientes (claves K00 a K14) pertenecen al grupo XI 'Enfermedades del sistema digestivo'. Llámalas 'enfermedades de la boca y los dientes' y, si muestras grupos, explica en una frase por qué aparecen como sistema digestivo.",
+  "Aquí el grupo XXI son sobre todo exámenes odontológicos (revisiones) y pruebas o ajustes de prótesis dentales y de aparatos de ortodoncia. Si preguntan por los problemas dentales más comunes, agrupa por 'enfermedad' con el filtro grupo no_en ['XXI'].",
+  "El grupo XIX (traumatismos) en este conjunto corresponde sobre todo a fracturas de dientes.",
+  "Una misma visita puede generar varios registros (por ejemplo, caries y examen odontológico el mismo día). Habla de consultas registradas, no de visitas ni de personas.",
+  "Muchas consultas son de niñas, niños y adolescentes. Nunca intentes acotar a menores en un municipio pequeño (por ejemplo, combinando edad, sexo, municipio y mes). Al cruzar lugar y edad el mínimo de privacidad es mayor (ver 'privacidad'); si la herramienta oculta grupos, explícalo sin buscar otra forma de obtenerlos.",
+  "La unidad médica (centro de salud) no está disponible en este conjunto. Si preguntan por centros de salud, explica el motivo y ofrece el dato por municipio."
+]
+
+[archivos]
+patron = "*.csv"
+separador = ","
+codificaciones = ["utf-8", "latin-1"]   # se prueban en este orden
+# Archivos de la carpeta que son documentación, no datos.
+excluir = ["diccionario_*.csv"]
+
+[archivos.equivalencias]
+# Los archivos 2024_2025 nombran distinto tres columnas (igual que en Consulta General).
+"fecha" = "fecha_consulta"
+"edad_anos" = "edad"
+"clave_grupo_ enfermedad" = "clave_grupo_enfermedad"
+
+[fecha]
+columna = "fecha_consulta"
+formato = "%d/%m/%Y"
+
+[identificador]
+# Solo se usa en la ingesta para revisar duplicados. NO entra a la base.
+# La numeración (SB_<año>_n) se reinicia entre publicaciones: un ID repetido con otros datos no es duplicado.
+columna = "id_consulta"
+eliminar_filas_identicas = true   # la unión entre las partes 1 y 2 de 2024-2025 repite una fila idéntica
+
+[privacidad]
+# minimo_por_grupo y max_filtros_estrechos: comunes de Salud.
+# Mínimo reforzado: si una consulta usa (filtra o agrupa) una columna de CADA lista, los grupos
+# con menos consultas que este mínimo se ocultan. Protege a menores en municipios pequeños.
+[[privacidad.combinaciones]]
+columnas = [["municipio"], ["edad", "rango_edad"]]
+minimo_por_grupo = 20
+motivo = "Muchas consultas son de niñas, niños y adolescentes, y hay municipios con pocas consultas."
+
+# ---------- Columnas del CSV ----------
+# tipo: categoria | codigo | numero
+# normalizar: oracion | titulo | ninguno
+# doble_espacio: coma (se perdió una coma) | segmento (separa partes del nombre) | espacio
+# expuesta = false → no se ofrece al modelo (se explica el motivo)
+# cuasi_identificador = true → cuenta para la regla de privacidad de filtros estrechos
+
+[[columnas]]
+nombre = "edad"
+alias = "edad"
+tipo = "numero"
+descripcion = "Edad en años cumplidos al momento de la consulta (0 = menor de 1 año)."
+unidad = "años"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "edad_meses"
+alias = "edad_meses"
+tipo = "numero"
+expuesta = false
+motivo = "Solo complementa la edad de menores de 1 año; se usa el rango 'Menores de 1 año'."
+
+[[columnas]]
+nombre = "edad_dias"
+alias = "edad_dias"
+tipo = "numero"
+expuesta = false
+motivo = "Solo complementa la edad de menores de 1 mes; se usa el rango 'Menores de 1 año'."
+
+[[columnas]]
+nombre = "sexo"
+alias = "sexo"
+tipo = "categoria"
+descripcion = "Sexo registrado en la consulta. Refleja quién usa el servicio, no la composición de la población."
+normalizar = "oracion"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "peso"
+alias = "peso"
+tipo = "numero"
+expuesta = false
+motivo = "Calidad baja: muchos registros traen el texto 'null' o el valor 999 en lugar del dato, y hay valores imposibles (por ejemplo, adultos con menos de 30 kg)."
+sinonimos = ["peso", "pesan", "pesa", "kilos", "imc", "indice de masa corporal"]
+
+[[columnas]]
+nombre = "altura"
+alias = "altura"
+tipo = "numero"
+expuesta = false
+motivo = "Calidad baja: muchos registros traen el texto 'null' o el valor 999 en lugar del dato, y hay valores imposibles (por ejemplo, adultos de menos de 1 metro)."
+sinonimos = ["altura", "estatura", "talla", "miden", "mide", "imc", "indice de masa corporal"]
+
+[[columnas]]
+nombre = "municipio_unidad_medica"
+alias = "municipio"
+tipo = "categoria"
+descripcion = "Municipio donde está la unidad médica (no donde vive la persona)."
+normalizar = "titulo"
+diccionario = "municipios_nl"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "institucion_unidad_medica"
+alias = "unidad_medica"
+tipo = "categoria"
+normalizar = "titulo"
+expuesta = false
+motivo = "No se ofrece: cada publicación escribe distinto el nombre de las unidades ('CSU' y 'C S U'), así que una misma unidad aparecería partida en dos, y en centros pequeños el cruce de unidad y edad podría identificar a menores."
+
+[[columnas]]
+nombre = "clave_grupo_enfermedad"
+alias = "grupo"
+tipo = "codigo"
+etiqueta = "descripcion_grupo_enfermedad"
+descripcion = "Grupo de enfermedad según la CIE-10 (capítulos con números romanos). Las enfermedades de boca y dientes están en el grupo XI."
+normalizar = "oracion"
+doble_espacio = "coma"
+diccionario = "grupos_cie10"
+expuesta = true
+
+[[columnas]]
+nombre = "clave_enfermedad"
+alias = "enfermedad"
+tipo = "codigo"
+etiqueta = "descripcion_enfermedad"
+descripcion = "Diagnóstico o motivo de la consulta dental, con clave de la CIE-10 (Clasificación Internacional de Enfermedades)."
+normalizar = "oracion"
+doble_espacio = "coma"
+buscable = true
+patron = "^[A-Z][0-9]{2}[0-9A-Z]$"
+expuesta = true
+
+# ---------- Valores especiales ----------
+[[valores_especiales]]
+columna = "grupo"
+valores = ["XI"]
+etiqueta = "boca_y_dientes"
+explicacion = "En la CIE-10, las enfermedades de la boca y los dientes (caries, gingivitis, periodontitis y otras, claves K00 a K14) forman parte del grupo 'Enfermedades del sistema digestivo'."
+
+[[valores_especiales]]
+columna = "grupo"
+valores = ["XXI"]
+etiqueta = "no_es_enfermedad"
+explicacion = "El grupo 'Factores que influyen en el estado de salud y contacto con los servicios de salud' no son enfermedades: aquí son sobre todo exámenes odontológicos y pruebas o ajustes de prótesis y de aparatos de ortodoncia."
+
+[[valores_especiales]]
+columna = "grupo"
+valores = ["XIX"]
+etiqueta = "traumatismos"
+explicacion = "En este conjunto, el grupo de traumatismos corresponde sobre todo a fracturas de dientes."
+
+# ---------- Advertencias propias que el motor agrega según la consulta ----------
+# (las comunes —consulta no es persona, sin tasas— están en data/salud/_comun.toml)
+[[advertencias_condicionales]]
+cuando = { siempre = true }
+texto = "Una misma visita al dentista puede generar más de un registro (por ejemplo, caries y examen odontológico el mismo día)."
+
+[[advertencias_condicionales]]
+cuando = { usa_columna = ["sexo"] }
+texto = "El sexo muestra quién usa el servicio dental, no quién tiene más problemas dentales ni la composición de la población."
+
+[[advertencias_condicionales]]
+cuando = { resultado_incluye = { columna = "grupo", valores = ["XI"] } }
+texto = "En la clasificación CIE-10, las enfermedades de la boca y los dientes (como caries y gingivitis) aparecen dentro del grupo 'Enfermedades del sistema digestivo'."
+
+[[advertencias_condicionales]]
+cuando = { resultado_incluye = { columna = "grupo", valores = ["XXI"] } }
+texto = "El grupo 'Factores que influyen en el estado de salud' no son enfermedades: aquí son sobre todo exámenes odontológicos y pruebas de prótesis o de aparatos de ortodoncia."
+
+# ---------- Controles de calidad que se reportan en la ingesta ----------
+[[controles_calidad]]
+descripcion = "Pesos iguales a 999 (parece un marcador de dato faltante)"
+columna = "peso"
+operador = "="
+valor = 999
+
+[[controles_calidad]]
+descripcion = "Alturas iguales a 999 (parece un marcador de dato faltante)"
+columna = "altura"
+operador = "="
+valor = 999
+
+[[controles_calidad]]
+descripcion = "Adultos (18 años o más) con peso menor a 30 kg"
+columna = "peso"
+operador = "<"
+valor = 30
+solo_si = { columna = "edad", operador = ">=", valor = 18 }
+
+[[controles_calidad]]
+descripcion = "Adultos (18 años o más) con altura menor a 100 cm"
+columna = "altura"
+operador = "<"
+valor = 100
+solo_si = { columna = "edad", operador = ">=", valor = 18 }
+
+[[controles_calidad]]
+descripcion = "Edades mayores a 100 años"
+columna = "edad"
+operador = ">"
+valor = 100
+
+# Valores que deberían aparecer (para detectar faltantes, como un municipio).
+[[valores_esperados]]
+columna = "municipio"
+diccionario = "municipios_nl"
+
+# Relación entre claves (en la CIE-10 cada capítulo usa letras propias).
+[[controles_jerarquia]]
+descripcion = "Primera letra de la clave de enfermedad dentro de cada grupo"
+padre = "grupo"
+hija = "enfermedad"
+caracteres = 1

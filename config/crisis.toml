@@ -1,0 +1,149 @@
+# ==========================================================
+# Protocolo de crisis. Lo lee backend/crisis.py al arrancar el servidor (si falta o tiene
+# errores, el servidor no arranca). Se revisa ANTES de llamar al modelo: si un mensaje expresa
+# malestar propio, desesperanza o ideas de hacerse daño o de morir, se responde con un texto
+# fijo de aquí. El modelo nunca escribe estos textos ni los teléfonos.
+#
+# Los textos usan {contacto.campo}, por ejemplo {linea_vida.telefono}.
+# Antes de publicar, confirma que los teléfonos y sus horarios siguen vigentes.
+# ==========================================================
+
+[contactos.linea_vida]
+nombre = "Línea de la Vida"
+telefono = "800 911 2000"
+detalle = "gratuita, las 24 horas"
+
+[contactos.emergencias]
+nombre = "Emergencias"
+telefono = "911"
+detalle = "emergencias"
+
+# ---------- Mensajes fijos ----------
+[mensajes]
+# Malestar propio, desesperanza o ideas de hacerse daño o de morir.
+crisis = """Siento mucho que estés pasando por esto. Lo que sientes importa y no tienes que enfrentarlo a solas.
+
+Por favor, habla ahora con alguien de confianza o llama a la {linea_vida.nombre}: {linea_vida.telefono} ({linea_vida.detalle}). Ahí te escucha una persona preparada para ayudarte.
+
+Si estás en peligro o sientes que puedes hacerte daño, llama al {emergencias.telefono} o ve a urgencias.
+
+Yo soy solo un asistente de datos y no puedo acompañarte como lo haría una persona, pero hay quien puede hacerlo ahora mismo."""
+
+# Preocupación por otra persona en riesgo.
+tercero = """Gracias por preocuparte por esa persona. Si crees que está en peligro ahora, llama al {emergencias.telefono}.
+
+También pueden llamar a la {linea_vida.nombre}: {linea_vida.telefono} ({linea_vida.detalle}). Ahí orientan tanto a quien está pasando por un momento difícil como a quien quiere ayudar.
+
+Si puedes, no la dejes sola, escúchala sin juzgarla y acompáñala a buscar ayuda."""
+
+# Piden diagnóstico, tratamiento, terapia o consejo de salud mental (sin señales de malestar).
+orientacion = """No puedo dar diagnósticos, recomendar tratamientos o medicamentos, ni acompañarte como lo haría un profesional: solo explico datos.
+
+Un profesional de psicología o psiquiatría, o tu centro de salud, pueden orientarte. Si estás pasando por un momento difícil, la {linea_vida.nombre} ({linea_vida.telefono}, {linea_vida.detalle}) también puede ayudarte."""
+
+# Línea breve al final de toda respuesta sobre autolesión o suicidio, y de toda respuesta después de una crisis.
+linea_apoyo = "Si tú o alguien cercano está pasando por un momento difícil, llama a la {linea_vida.nombre}: {linea_vida.telefono} ({linea_vida.detalle}). En una emergencia, llama al {emergencias.telefono}."
+
+# Saludo o agradecimiento después de una crisis (en lugar de "¡Con gusto!").
+despues_de_crisis = "Aquí sigo. Recuerda que en la {linea_vida.nombre} ({linea_vida.telefono}, {linea_vida.detalle}) te puede escuchar una persona ahora mismo. En una emergencia, llama al {emergencias.telefono}."
+
+# ---------- Normalización del texto antes de buscar ----------
+# El texto se pasa a minúsculas sin acentos, se reducen las letras repetidas ("muuuy") y se aplica un
+# plegado fonético (z/s/c, qu/k, v/b, ll/y, h muda) igual en el texto y en las frases de abajo.
+[normalizacion]
+# Abreviaturas de chat (palabra completa → lo que significa).
+abreviaturas = { q = "que", k = "que", ke = "que", xq = "porque", pq = "porque", porq = "porque", x = "por", d = "de", tb = "tambien", tmb = "tambien", kero = "quiero", qero = "quiero", kiero = "quiero", toy = "estoy", stoy = "estoy", ntp = "no te preocupes", nd = "nada", aki = "aqui", sta = "esta", ps = "pues" }
+# Palabras largas que se corrigen si vienen con una letra de más, de menos o cambiada ("sucidarme").
+# No agregues verbos cortos y comunes ("aguanto"): su corrección podría cambiar de persona ("aguanta").
+corregibles = [
+  "suicidarme", "suicidar", "matarme", "morirme", "quitarme", "lastimarme", "cortarme", "desaparecer", "despertar",
+  "deprimido", "deprimida", "desesperado", "desesperada", "desesperanza", "ansiedad", "depresion", "sentido",
+  "esperanza", "suicidio"
+]
+
+# ---------- Frases que activan el protocolo ----------
+# Expresiones regulares sencillas, sin acentos: (a|b) para opciones, ? para opcional y [oa] para letras.
+# Una "c" siempre va seguida de letra (escribe "esquizofrenico|esquizofrenica", no "esquizofrenic[oa]").
+# <palabras> = hasta cinco palabras cualesquiera. Solo frases en primera persona: "suicidio" o
+# "depresión" solas NO activan nada (las preguntas estadísticas se responden con datos).
+[deteccion]
+# Se quitan del texto antes de buscar (frases que parecen de riesgo pero no lo son).
+excepciones = [
+  "cort(o|arme|ar|e) (el|mi|los|las|la|un|una) (pelo|cabello|fleco|unas|barba|copete)",
+  "me (quiero )?(muero|mori|morir|moria) de (risa|hambre|sueno|ganas|calor|frio|amor|pena|verguenza|aburrimiento|miedo|gusto|envidia)",
+  "me (siento|senti) (muy |un poco |bien )?mal (del|de la|de|con|por) (estomago|panza|cabeza|garganta|gripa|gripe|espalda|cuerpo|muela|diente|resfriado|tos|fiebre)",
+  "matar (el|la) (tiempo|rato)"
+]
+
+# Ideas de hacerse daño o de morir.
+riesgo = [
+  "me (quiero|voy a|pienso|tengo que|deberia) (matar|morir|suicidar|aventar|colgar)",
+  "(quiero|quisiera|deseo|necesito|voy a|pienso|planeo|tengo ganas de|me dan ganas de|ganas de|he pensado en|pienso en|estoy pensando en|intente|trate de) (matarme|morirme|suicidarme|quitarme la vida|hacerme dano|lastimarme|cortarme|acabar con mi vida|terminar con mi vida|acabar con todo|desaparecer para siempre)",
+  "(quiero|quisiera|tengo ganas de|me dan ganas de|ojala pudiera) (morir|desaparecer|dejar de existir|irme de este mundo)",
+  "(suicidarme|matarme|quitarme la vida)",
+  "(ya )?no quiero (vivir|seguir viviendo|existir|estar viv[oa]|seguir aqui|seguir en este mundo)",
+  "ya no quiero seguir",
+  "(quisiera|quiero|me gustaria|ojala pudiera) (dormir|dormirme) y no (despertar|volver a despertar)",
+  "no (quiero|quisiera) (volver a )?despertar",
+  "(estaria|estaba|estoy) mejor muert[oa]",
+  "ojala (me muriera|estuviera muert[oa]|no hubiera nacido)",
+  "mejor me muero",
+  "(estarian|estan|estaria|estara|estaran) mejor sin mi",
+  "(seria|es) mejor (que )?(si )?(yo )?no (existiera|estuviera)",
+  "me (corto|he cortado|lastimo|he lastimado|hago dano|he hecho dano)",
+  "(hacerme|haciendome) dano",
+  "(pienso|he pensado|estoy pensando|pensando|tengo ganas de) en (el suicidio|suicidarme|la muerte|morir|matarme)",
+  "(tengo|he tenido|tuve) (pensamientos|ideas) (suicidas|de (muerte|suicidio|morir|matarme|hacerme dano))",
+  "me quiero ir de este mundo"
+]
+
+# Preocupación por otra persona (se responde con el mensaje 'tercero').
+tercero = [
+  "(mi|mis|nuestro|nuestra|conozco a alguien|tengo un amigo|tengo una amiga|alguien que conozco) <palabras>(se quiere|quiere|se va a|piensa|esta pensando en|intento|intenta|amenaza con) (matar|matarse|suicidar|suicidarse|morir|morirse|quitar la vida|quitarse la vida|hacer dano|hacerse dano|cortar|cortarse)",
+  "(mi|mis|nuestro|nuestra|conozco a alguien|tengo un amigo|tengo una amiga|alguien que conozco) <palabras>(se corta|se lastima|se hace dano|ya no quiere vivir|habla de (suicidarse|matarse|morirse|quitarse la vida))"
+]
+
+# Malestar propio o desesperanza (se responde con el mensaje 'crisis').
+malestar = [
+  "me siento (muy |tan |super |bien |demasiado |bastante |re |muy muy )?(triste|sol[oa]|vaci[oa]|deprimid[oa]|desesperad[oa]|fatal|horrible|terrible|de la chingada|de la fregada|del asco|perdid[oa]|sin ganas|sin esperanza|inutil|una carga|una basura|ansios[oa]|abrumad[oa]|agotad[oa]|desanimad[oa]|hart[oa]|mal|culpable|atrapad[oa]|rot[oa]|destrozad[oa])",
+  "estoy (muy |tan |super |bien |demasiado |bastante )?(deprimid[oa]|desesperad[oa]|triste|hart[oa] de (vivir|todo)|cansad[oa] de (vivir|todo)|en crisis|destrozad[oa]|desanimad[oa]|sin esperanza|llorando)",
+  "estoy (muy|tan|super|bien|demasiado|bastante) (sol[oa]|perdid[oa])",
+  "ya no (aguanto|soporto)",
+  "ya no puedo (mas|con esto|con mi vida|con todo|seguir)",
+  "no (aguanto|soporto) (mas|mi vida|esta vida|vivir)",
+  "no le (veo|encuentro) (sentido|caso) a (la|mi) vida",
+  "(mi|la) vida no (tiene sentido|vale la pena|vale nada)",
+  "no vale la pena (vivir|seguir)",
+  "nada tiene sentido",
+  "nadie me (quiere|entiende|escucha|necesita|extranaria)",
+  "soy una (carga|basura|molestia)",
+  "no sirvo para nada",
+  "me odio",
+  "no tengo ganas de nada",
+  "todo me sale mal",
+  "tengo (mucha |muchisima |demasiada |tanta )?(depresion|ansiedad|tristeza)",
+  "tengo (ataques|crisis) de (panico|ansiedad)",
+  "(sufro|padezco) (de )?(depresion|ansiedad)",
+  "(ayudame|ayudenme|me ayudas) (con|por favor con) mi (ansiedad|depresion|tristeza|problema|vida)",
+  "necesito (hablar con alguien|que alguien me escuche|desahogarme)",
+  "quiero (hablar|platicar) (contigo )?de (mis problemas|lo que siento|mis sentimientos)",
+  "(lloro|estoy llorando) (todos los dias|todo el dia|mucho|sin razon|sin parar)",
+  "no puedo dejar de llorar",
+  "no tengo (a nadie|esperanza|razones para vivir|por que vivir)"
+]
+
+# Piden consejo, diagnóstico, terapia o tratamiento de salud mental (se responde con 'orientacion').
+orientacion = [
+  "(puedes|podrias) (ser|actuar como) mi (terapeuta|psicologo|psicologa|amigo|amiga|confidente)",
+  "(debo|deberia|necesito|tengo que) ir (al|a la|con el|con la|con un|con una|a) (psicologo|psicologa|psiquiatra|terapeuta|terapia)",
+  "(que|cual|cuales) (antidepresivo|ansiolitico|terapia|psicologo|psiquiatra)",
+  "(como|que hago para|que puedo hacer para) (dejo|dejar|controlo|controlar|supero|superar|quito|quitar|manejo|manejar|curo|curar|salgo|salir|bajo|bajar) (de )?(la |mi |el )?(ansiedad|depresion|tristeza|adiccion|estres|panico|insomnio|duelo)",
+  "(soy|sere|sera que soy|creo que soy|como se si soy|como saber si soy) (bipolar|depresiv[oa]|ansios[oa]|esquizofrenico|esquizofrenica|autista)",
+  "(como se|como saber|sera que tengo|tendre) (si tengo )?(depresion|ansiedad|tdah|autismo|bipolaridad|esquizofrenia)"
+]
+
+# Si piden un consejo médico (lo detecta el filtro general) sobre alguno de estos temas, se responde con
+# 'orientacion' (incluye la línea de apoyo) en lugar del mensaje general de consejo médico.
+temas_salud_mental = [
+  "(depresion|depresiv[oa]|ansiedad|ansios[oa]|panico|estres|tristeza|triste|insomnio|psicolog[oa]|psicologia|psiquiatra|psiquiatria|terapia|terapeuta|antidepresiv[oa]s?|ansiolitico|ansiolitica|ansioliticos|bipolar|esquizofrenia|adiccion|adicciones|suicidio|autolesion|salud mental|emocional|emociones)"
+]

@@ -1,0 +1,324 @@
+# ==========================================================
+# Configuración del conjunto de datos "Salud Mental".
+# La lee backend/ingest.py. El código genérico no conoce este dataset:
+# todo lo específico (columnas, reglas, advertencias) vive aquí. Las reglas que valen
+# para todos los datasets de Salud están en data/salud/_comun.toml y se unen al ingerir.
+# Es un tema sensible: privacidad reforzada, temas restringidos y lenguaje sin estigma.
+# Ojo con TOML: las claves sueltas (como siglas o reglas_interpretacion) deben ir
+# ANTES de la primera sección [..] o [[..]]; si van después, quedan dentro de esa sección.
+# ==========================================================
+
+id = "salud_mental"                    # solo minúsculas, números y guion bajo
+categoria = "salud"                    # debe existir en data/categorias.toml
+nombre = "Salud Mental"
+descripcion = "Consultas de los servicios de salud mental de la Secretaría de Salud de Nuevo León (hospital de especialidades en salud mental, centros comunitarios de salud mental y adicciones y centros de salud). Cada registro es una consulta (no una persona), con edad, sexo, municipio de la unidad y el diagnóstico (CIE-10), como ansiedad, depresión o consumo de sustancias."
+institucion = "Secretaría de Salud de Nuevo León, Dirección de Planeación"
+fuente_url = "https://catalogodatos.nl.gob.mx/dataset/salud-mental"
+fuente_original_url = "http://www.dgis.salud.gob.mx/contenidos/basesdedatos/bdc_serviciossis_gobmx.html"
+cobertura_geografica = "Nuevo León, según el municipio de la unidad médica donde se dio la consulta (no el municipio donde vive la persona). Solo algunos municipios tienen unidades de salud mental en estos datos."
+# Desempate en buscar_dataset: con la misma coincidencia gana Consulta General (prioridad 1).
+prioridad = 0
+
+# Palabras que ayudan a encontrar este dataset (buscar_dataset y filtro de alcance).
+palabras_clave = [
+  "salud mental", "mental", "mentales", "psicologia", "psicologo", "psicologa", "psicologos", "psicologica",
+  "psicologico", "psiquiatria", "psiquiatra", "psiquiatras", "psiquiatrico", "depresion", "depresiones", "depresivo",
+  "depresiva", "ansiedad", "estres", "panico", "esquizofrenia", "bipolar", "tdah", "deficit de atencion", "autismo",
+  "adiccion", "adicciones", "drogas", "alcoholismo", "sustancias", "suicidio", "suicidios", "autolesion",
+  "autolesiones", "autoinfligida", "ideacion suicida", "trastorno", "trastornos", "psicoterapia", "terapia",
+  "emocional", "emocionales", "maltrato", "diagnostico", "diagnosticos", "atencion", "atenciones", "consulta", "consultas"
+]
+
+# Preguntas de ejemplo que se sugieren cuando alguien pide algo fuera de alcance.
+preguntas_ejemplo = [
+  "¿Cuáles son los diagnósticos de salud mental más comunes en adolescentes de 15 a 19 años?",
+  "¿Cuántas consultas de salud mental hubo cada mes?"
+]
+
+# Siglas que se conservan en mayúsculas al normalizar textos.
+siglas = ["VIH", "TDAH", "CSU"]
+
+# ---------- Lo que NO hay en los datos (además de lo común de Salud) ----------
+datos_no_disponibles = [
+  "Cuántas personas viven con un trastorno (prevalencia): son atenciones registradas; muchas personas no buscan atención o se atienden en otras instituciones (IMSS, ISSSTE o servicios privados).",
+  "Suicidios, intentos de suicidio o lesiones autoinfligidas como evento: no hay defunciones ni claves de lesión autoinfligida intencional (X60 a X84); solo consultas con antecedente de autolesión o con otros síntomas del estado emocional.",
+  "Unidad médica: no se ofrece en este conjunto (ver columnas no disponibles).",
+  "Tratamientos, medicamentos, hospitalizaciones o resultados de la atención.",
+  "Diagnósticos con muy pocas consultas en todo el periodo, y los de identidad de género y sexualidad: no se consultan por separado por privacidad."
+]
+
+# ---------- Reglas propias (las comunes de Salud están en data/salud/_comun.toml) ----------
+reglas_interpretacion = [
+  "Este conjunto es el servicio de salud mental. Las preguntas de salud mental (depresión, ansiedad, adicciones, psicología o psiquiatría) se responden con este conjunto. Los diagnósticos de salud mental de Consulta General y Especialidades son otros registros: no los sumes ni los compares con estos.",
+  "Lenguaje sin estigma: di 'personas con depresión', 'consultas por esquizofrenia', 'personas que usan sustancias'. Nunca digas 'enfermos mentales', 'locos', 'trastornados', 'esquizofrénicos' o 'adictos' como sustantivo, ni 'cometer suicidio'. No uses palabras alarmistas como 'epidemia', 'alarmante' u 'ola'.",
+  "Son atenciones registradas, no la cantidad real de personas con un trastorno: muchas personas no buscan atención. Un aumento o una baja puede deberse a más servicios, mejor registro o menos estigma; no atribuyas causas que los datos no muestran.",
+  "En salud mental una misma persona suele tener muchas consultas de seguimiento: muchas consultas no significan muchas personas.",
+  "El municipio muestra dónde están los servicios, no dónde hay más problemas: General Escobedo tiene más consultas que cualquier otro municipio porque ahí está el Hospital de Especialidades en Salud Mental, que atiende a personas de todo el estado. Al comparar municipios, adviértelo.",
+  "Autolesión y suicidio: la 'historia personal de lesión autoinfligida' es un antecedente, no un intento reciente ni una muerte. 'Otros síntomas y signos que involucran el estado emocional' incluye las ideas suicidas, pero no solo eso, y la idea suicida que forma parte de un trastorno se registra con el trastorno: las cifras se quedan muy por debajo de la realidad. Solo totales, por sexo o grupo de edad; sin municipios, meses, rankings, métodos ni medios. Nunca presentes el suicidio como solución ni como algo inevitable. La línea de apoyo la agrega el sistema: no escribas teléfonos.",
+  "Violencia y maltrato (grupos XIX y XX y claves de abuso o maltrato): son consultas por sus efectos en la salud, no denuncias ni la cantidad de violencia que ocurre. Sin detalles ni casos; solo totales, por sexo o grupo de edad.",
+  "Aquí el grupo XXI son sobre todo psicoterapia y problemas familiares, de pareja, escolares o legales: no son trastornos. Si preguntan por los diagnósticos más comunes, agrupa por 'enfermedad' con el filtro grupo no_en ['XXI'] y explícalo en una frase.",
+  "Muchas consultas son de niñas, niños o adolescentes. Nunca intentes acotar a menores en un municipio pequeño. Si la herramienta oculta grupos o rechaza un cruce por privacidad, explícalo sin buscar otra forma de obtenerlo.",
+  "Hay errores de captura (por ejemplo, diagnósticos de depresión en bebés de días de nacidos): no los interpretes.",
+  "No eres terapeuta ni acompañante y no das consejos. Si alguien cuenta lo que siente, expresa malestar o pide ayuda personal, responde únicamente [[CRISIS]]. Si pide un diagnóstico, un tratamiento o un medicamento, responde únicamente [[CONSEJO_MEDICO]]."
+]
+
+[archivos]
+patron = "*.csv"
+separador = ","
+codificaciones = ["utf-8", "latin-1"]   # se prueban en este orden
+# Archivos de la carpeta que son documentación, no datos.
+excluir = ["diccionario_*.csv"]
+
+[archivos.equivalencias]
+# El archivo 2024_2025 nombra distinto dos columnas (la edad ya se llama 'edad').
+"fecha" = "fecha_consulta"
+"clave_grupo_ enfermedad" = "clave_grupo_enfermedad"
+
+[fecha]
+columna = "fecha_consulta"
+formato = "%d/%m/%Y"
+
+[identificador]
+# Solo se usa en la ingesta para revisar duplicados. NO entra a la base.
+# La numeración (SM_<año>_n) se reinicia entre publicaciones: un ID repetido con otros datos no es duplicado.
+columna = "id_consulta"
+eliminar_filas_identicas = true
+
+[completitud]
+# umbral_dia_habil, meses_rezago y rezago_antes_de_hueco: comunes de Salud.
+# Además, un mes se marca incompleto si los municipios que bajan a menos de 'umbral' × su mediana
+# de meses previos suman al menos 'peso_minimo' de las consultas esperadas en ese mes.
+por_columna = { columna = "municipio", umbral = 0.5, peso_minimo = 0.2 }
+
+[privacidad]
+# max_filtros_estrechos: común de Salud. El mínimo general sube de 5 a 10.
+minimo_por_grupo = 10
+# Los valores con menos de 'minimo_por_grupo' consultas en todo el periodo no se listan ni se pueden filtrar.
+ocultar_valores_poco_frecuentes = true
+
+# Mínimo reforzado al cruzar lugar y edad (menores en municipios pequeños).
+[[privacidad.combinaciones]]
+columnas = [["municipio"], ["edad", "rango_edad"]]
+minimo_por_grupo = 20
+motivo = "Muchas consultas son de niñas, niños y adolescentes, y hay municipios con pocas consultas."
+
+# Cruces que se rechazan: si una consulta usa (filtra o agrupa) una columna de CADA lista.
+# Los filtros 'no_en' y 'distinto' no cuentan (no acotan la consulta).
+[[privacidad.bloqueos]]
+columnas = [["municipio"], ["enfermedad"], ["edad", "rango_edad", "sexo"]]
+motivo = "combina lugar, diagnóstico y datos de la persona"
+
+[[privacidad.bloqueos]]
+columnas = [["municipio"], ["enfermedad"], ["mes", "fecha"]]
+motivo = "combina lugar, diagnóstico y fecha"
+
+[[privacidad.bloqueos]]
+columnas = [["edad", "rango_edad"], ["sexo"], ["municipio"], ["mes", "fecha"]]
+motivo = "combina edad, sexo, lugar y fecha"
+
+# ---------- Columnas del CSV ----------
+# tipo: categoria | codigo | numero
+# normalizar: oracion | titulo | ninguno
+# doble_espacio: coma (se perdió una coma) | segmento (separa partes del nombre) | espacio
+# expuesta = false → no se ofrece al modelo (se explica el motivo)
+# guardar = false → se usa en los controles de la ingesta y luego se borra de la base
+# cuasi_identificador = true → cuenta para la regla de privacidad de filtros estrechos
+
+[[columnas]]
+nombre = "edad"
+alias = "edad"
+tipo = "numero"
+descripcion = "Edad en años cumplidos al momento de la consulta (0 = menor de 1 año)."
+unidad = "años"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "edad_meses"
+alias = "edad_meses"
+tipo = "numero"
+expuesta = false
+guardar = false
+motivo = "Solo complementa la edad de menores de 1 año; se usa el rango 'Menores de 1 año'."
+
+[[columnas]]
+nombre = "edad_dias"
+alias = "edad_dias"
+tipo = "numero"
+expuesta = false
+guardar = false
+motivo = "Solo complementa la edad de menores de 1 mes; se usa el rango 'Menores de 1 año'."
+
+[[columnas]]
+nombre = "sexo"
+alias = "sexo"
+tipo = "categoria"
+descripcion = "Sexo registrado en la consulta. Refleja quién recibe atención, no quién tiene más trastornos ni la composición de la población."
+normalizar = "oracion"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "peso"
+alias = "peso"
+tipo = "numero"
+expuesta = false
+guardar = false
+motivo = "Calidad baja (muchos registros traen el texto 'null' y hay valores imposibles, como adultos con menos de 30 kg) y, junto con la altura, la edad y el lugar, funciona como una huella que permitiría seguir a una persona en sus consultas. No se guarda en la base."
+sinonimos = ["peso", "pesan", "pesa", "kilos", "imc", "indice de masa corporal"]
+
+[[columnas]]
+nombre = "altura"
+alias = "altura"
+tipo = "numero"
+expuesta = false
+guardar = false
+motivo = "Calidad baja (muchos registros traen el texto 'null' y hay valores imposibles, como adultos de menos de 1 metro) y, junto con el peso, la edad y el lugar, funciona como una huella que permitiría seguir a una persona en sus consultas. No se guarda en la base."
+sinonimos = ["altura", "estatura", "talla", "miden", "mide", "imc", "indice de masa corporal"]
+
+[[columnas]]
+nombre = "municipio_unidad_medica"
+alias = "municipio"
+tipo = "categoria"
+descripcion = "Municipio donde está la unidad médica (no donde vive la persona). Muestra dónde están los servicios de salud mental."
+normalizar = "titulo"
+diccionario = "municipios_nl"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "institucion_unidad_medica"
+alias = "unidad_medica"
+tipo = "categoria"
+normalizar = "titulo"
+unificar = "sin_signos"
+expuesta = false
+guardar = false
+motivo = "No se ofrece: los nombres cambian entre publicaciones ('CSU' y 'C S U', y unidades que aparecen con otro nombre), el nombre revela el tipo de atención (por ejemplo, adicciones) y, en unidades pequeñas, el cruce con edad y diagnóstico podría identificar a una persona."
+
+[[columnas]]
+nombre = "clave_grupo_enfermedad"
+alias = "grupo"
+tipo = "codigo"
+etiqueta = "descripcion_grupo_enfermedad"
+descripcion = "Grupo de enfermedad según la CIE-10 (capítulos con números romanos). Los trastornos mentales y del comportamiento son el grupo V."
+normalizar = "oracion"
+doble_espacio = "coma"
+diccionario = "grupos_cie10"
+expuesta = true
+
+[[columnas]]
+nombre = "clave_enfermedad"
+alias = "enfermedad"
+tipo = "codigo"
+etiqueta = "descripcion_enfermedad"
+descripcion = "Diagnóstico o motivo de la consulta de salud mental, con clave de la CIE-10 (Clasificación Internacional de Enfermedades)."
+normalizar = "oracion"
+doble_espacio = "coma"
+buscable = true
+patron = "^[A-Z][0-9]{2}[0-9A-Z]$"
+expuesta = true
+cuasi_identificador = true
+
+# ---------- Temas restringidos propios (el de autolesión es común de Salud) ----------
+[[temas_restringidos]]
+id = "violencia"
+nombre = "violencia y maltrato"
+columna = "enfermedad"
+prefijos = ["T74", "Y05", "Y06", "Y07", "Y08", "Y09"]
+columnas_permitidas = ["sexo", "rango_edad", "edad", "grupo"]
+indicaciones = "Tema sensible: son consultas por los efectos de la violencia o el maltrato en la salud, no denuncias. Da solo cifras agregadas y su contexto, sin detalles ni casos concretos."
+
+[[temas_restringidos]]
+id = "violencia_grupos"
+nombre = "violencia y maltrato"
+columna = "grupo"
+claves = ["XIX", "XX"]
+columnas_permitidas = ["sexo", "rango_edad", "edad", "enfermedad"]
+indicaciones = "En este conjunto, los grupos XIX y XX son sobre todo consultas por maltrato, abuso o violencia. Da solo cifras agregadas, sin detalles ni casos concretos."
+
+# ---------- Valores que nunca se consultan por separado ----------
+[[valores_no_disponibles]]
+columna = "enfermedad"
+prefijos = ["F64", "F65", "F66", "Z70"]
+motivo = "Los diagnósticos de identidad de género y de sexualidad no se consultan por separado: son muy pocos (por privacidad) y la CIE-11 ya no clasifica la identidad de género como un trastorno. Solo cuentan dentro del total de su grupo."
+
+# ---------- Valores especiales ----------
+[[valores_especiales]]
+columna = "grupo"
+valores = ["XXI"]
+etiqueta = "no_es_enfermedad"
+explicacion = "El grupo 'Factores que influyen en el estado de salud y contacto con los servicios de salud' no son trastornos: aquí son sobre todo psicoterapia y problemas familiares, de pareja, escolares o legales."
+
+[[valores_especiales]]
+columna = "grupo"
+valores = ["XIX", "XX"]
+etiqueta = "violencia"
+explicacion = "En este conjunto, los grupos de traumatismos (XIX) y de causas externas (XX) corresponden sobre todo a consultas por maltrato, abuso o violencia."
+
+[[valores_especiales]]
+columna = "enfermedad"
+valores = ["F530", "F531", "F538", "F539"]
+etiqueta = "puerperio"
+explicacion = "Trastornos mentales asociados al puerperio: el periodo después del parto."
+
+# ---------- Advertencias propias que el motor agrega según la consulta ----------
+# (las comunes —consulta no es persona, sin tasas, autolesión— están en data/salud/_comun.toml)
+[[advertencias_condicionales]]
+cuando = { siempre = true }
+texto = "Son atenciones registradas en los servicios de salud mental, no la cantidad de personas con un trastorno: muchas personas no buscan atención o se atienden en otras instituciones. Una misma persona suele tener muchas consultas de seguimiento."
+
+[[advertencias_condicionales]]
+cuando = { usa_columna = ["municipio"] }
+texto = "Las cifras por municipio muestran dónde están los servicios de salud mental (por ejemplo, el Hospital de Especialidades en Salud Mental de General Escobedo atiende a personas de todo el estado), no dónde hay más problemas de salud mental. Solo algunos municipios tienen unidades en estos datos."
+
+[[advertencias_condicionales]]
+cuando = { usa_columna = ["sexo"] }
+texto = "El sexo muestra quién recibe atención, no quién tiene más trastornos ni la composición de la población."
+
+[[advertencias_condicionales]]
+cuando = { resultado_incluye = { columna = "grupo", valores = ["XXI"] } }
+texto = "El grupo 'Factores que influyen en el estado de salud' no son trastornos: aquí son sobre todo psicoterapia y problemas familiares, de pareja, escolares o legales."
+
+[[advertencias_condicionales]]
+cuando = { resultado_incluye = { columna = "grupo", valores = ["XIX", "XX"] } }
+texto = "Los grupos de traumatismos y de causas externas son aquí sobre todo consultas por maltrato, abuso o violencia: muestran atenciones por sus efectos en la salud, no denuncias ni la cantidad de violencia que ocurre."
+
+# ---------- Controles de calidad que se reportan en la ingesta ----------
+[[controles_calidad]]
+descripcion = "Adultos (18 años o más) con peso menor a 30 kg"
+columna = "peso"
+operador = "<"
+valor = 30
+solo_si = { columna = "edad", operador = ">=", valor = 18 }
+
+[[controles_calidad]]
+descripcion = "Adultos (18 años o más) con altura menor a 100 cm"
+columna = "altura"
+operador = "<"
+valor = 100
+solo_si = { columna = "edad", operador = ">=", valor = 18 }
+
+[[controles_calidad]]
+descripcion = "Pesos mayores a 250 kg"
+columna = "peso"
+operador = ">"
+valor = 250
+
+[[controles_calidad]]
+descripcion = "Edades mayores a 100 años"
+columna = "edad"
+operador = ">"
+valor = 100
+
+# Valores que deberían aparecer (para detectar faltantes, como un municipio).
+[[valores_esperados]]
+columna = "municipio"
+diccionario = "municipios_nl"
+
+# Relación entre claves (en la CIE-10 cada capítulo usa letras propias).
+[[controles_jerarquia]]
+descripcion = "Primera letra de la clave de enfermedad dentro de cada grupo"
+padre = "grupo"
+hija = "enfermedad"
+caracteres = 1

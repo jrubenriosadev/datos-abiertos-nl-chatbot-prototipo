@@ -1,0 +1,230 @@
+# ==========================================================
+# Configuración del conjunto de datos "Consulta General y Especialidades".
+# La lee backend/ingest.py. El código genérico no conoce este dataset:
+# todo lo específico (columnas, reglas, advertencias) vive aquí. Las reglas que valen
+# para todos los datasets de Salud están en data/salud/_comun.toml y se unen al ingerir.
+# Ojo con TOML: las claves sueltas (como siglas o reglas_interpretacion) deben ir
+# ANTES de la primera sección [..] o [[..]]; si van después, quedan dentro de esa sección.
+# ==========================================================
+
+id = "salud_consulta_general"          # solo minúsculas, números y guion bajo
+categoria = "salud"                    # debe existir en data/categorias.toml
+nombre = "Consulta General y Especialidades"
+descripcion = "Consultas generales y de especialidad en unidades médicas de la Secretaría de Salud de Nuevo León. Cada registro es una consulta (no una persona), con edad, sexo, municipio y unidad médica, y el motivo de la consulta clasificado por enfermedad."
+institucion = "Secretaría de Salud de Nuevo León, Dirección de Planeación"
+fuente_url = "https://catalogodatos.nl.gob.mx/dataset/consulta-general-y-especialidades"
+fuente_original_url = "http://www.dgis.salud.gob.mx/contenidos/basesdedatos/bdc_serviciossis_gobmx.html"
+cobertura_geografica = "Nuevo León, según el municipio de la unidad médica donde se dio la consulta (no el municipio donde vive la persona)."
+# Desempate en buscar_dataset: si una pregunta coincide igual con varios datasets
+# (por ejemplo, "¿cuántas consultas hubo cada mes?"), gana el de mayor prioridad.
+prioridad = 1
+
+# Palabras que ayudan a encontrar este dataset (buscar_dataset y filtro de alcance).
+palabras_clave = [
+  "salud", "consulta", "consultas", "enfermedad", "enfermedades", "padecimiento", "padecimientos",
+  "diagnostico", "diagnosticos", "motivo", "motivos", "medico", "medica", "medicas", "unidad medica",
+  "unidades medicas", "centro de salud", "centros de salud", "clinica", "hospital", "especialidad",
+  "especialidades", "cie", "cie-10", "morbilidad", "atencion medica", "diabetes", "hipertension",
+  "obesidad", "infeccion", "infecciones", "respiratoria", "respiratorias", "embarazo", "cancer", "tumor",
+  "gripa", "gripe", "resfriado", "covid", "dengue", "presion alta"
+]
+
+# Preguntas de ejemplo que se sugieren cuando alguien pide algo fuera de alcance
+# (los mensajes fijos muestran las 3 primeras de todos los datasets, en orden).
+preguntas_ejemplo = [
+  "¿Cuáles son los motivos de consulta más comunes en Monterrey?",
+  "¿Cuántas consultas hubo cada mes?"
+]
+
+# Siglas que se conservan en mayúsculas al normalizar textos.
+siglas = ["VIH", "COVID", "BCG", "DHL", "G6FD", "XXY", "SARS", "CS", "IMSS", "ISSSTE", "DIF"]
+
+# ---------- Reglas propias (las comunes de Salud están en data/salud/_comun.toml) ----------
+reglas_interpretacion = [
+  "En este conjunto el grupo XXI incluye chequeos generales, control del niño sano y supervisión del embarazo, y el sexo incluye la supervisión del embarazo.",
+  "Las preguntas sobre dientes, muelas, boca, encías, caries o dentista se responden con el conjunto Salud Bucal (el servicio dental). Este conjunto también tiene algunos diagnósticos de boca y dientes vistos en consulta general o de especialidad: úsalos solo si la persona pide expresamente las consultas generales o de especialidad, y no los sumes ni compares con Salud Bucal.",
+  "Las preguntas de salud mental (depresión, ansiedad, adicciones, psicología o psiquiatría) se responden con el conjunto Salud Mental. Este conjunto también tiene diagnósticos de salud mental vistos en consulta general o de especialidad: úsalos solo si la persona pide expresamente las consultas generales o de especialidad, y no los sumes ni compares con Salud Mental. Usa el mismo lenguaje sin estigma: 'personas con depresión', nunca 'enfermos mentales'."
+]
+
+[archivos]
+patron = "*.csv"
+separador = ","
+codificaciones = ["utf-8", "latin-1"]   # se prueban en este orden
+# Archivos de la carpeta que son documentación, no datos.
+excluir = ["diccionario_*.csv"]
+
+[archivos.equivalencias]
+# Los archivos 2024_2025 nombran distinto tres columnas; aquí se traducen al nombre canónico.
+"fecha" = "fecha_consulta"
+"edad_anos" = "edad"
+"clave_grupo_ enfermedad" = "clave_grupo_enfermedad"
+
+[fecha]
+columna = "fecha_consulta"
+formato = "%d/%m/%Y"
+
+[identificador]
+# Solo se usa en la ingesta para revisar duplicados. NO entra a la base.
+# La numeración (CE_<año>_n) se reinicia entre periodos: un ID repetido con otros datos no es duplicado.
+columna = "id_consulta"
+eliminar_filas_identicas = true   # filas idénticas en todas las columnas (partes encimadas)
+
+# [unidad], [privacidad], [completitud] y [edad]: comunes de Salud (data/salud/_comun.toml).
+
+# ---------- Columnas del CSV ----------
+# tipo: categoria | codigo | numero
+# normalizar: oracion | titulo | ninguno
+# doble_espacio: coma (se perdió una coma) | segmento (separa partes del nombre) | espacio
+# unificar = "sin_signos" → variantes que solo cambian en signos o espacios se muestran con una sola escritura
+# expuesta = false → no se ofrece al modelo (se explica el motivo)
+# cuasi_identificador = true → cuenta para la regla de privacidad de filtros estrechos
+
+[[columnas]]
+nombre = "edad"
+alias = "edad"
+tipo = "numero"
+descripcion = "Edad en años cumplidos del paciente al momento de la consulta (0 = menor de 1 año)."
+unidad = "años"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "edad_meses"
+alias = "edad_meses"
+tipo = "numero"
+expuesta = false
+motivo = "Solo complementa la edad de menores de 1 año; se usa el rango 'Menores de 1 año'."
+
+[[columnas]]
+nombre = "edad_dias"
+alias = "edad_dias"
+tipo = "numero"
+expuesta = false
+motivo = "Solo complementa la edad de menores de 1 mes (según el diccionario oficial); se usa el rango 'Menores de 1 año'."
+
+[[columnas]]
+nombre = "sexo"
+alias = "sexo"
+tipo = "categoria"
+descripcion = "Sexo registrado en la consulta. Refleja quién usa el servicio, no la composición de la población."
+normalizar = "oracion"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "peso"
+alias = "peso"
+tipo = "numero"
+expuesta = false
+motivo = "Calidad baja: hay vacíos y miles de valores imposibles (por ejemplo, adultos con menos de 30 kg)."
+sinonimos = ["peso", "pesan", "pesa", "kilos", "imc", "indice de masa corporal"]
+
+[[columnas]]
+nombre = "altura"
+alias = "altura"
+tipo = "numero"
+expuesta = false
+motivo = "Calidad baja: hay vacíos y miles de valores imposibles (por ejemplo, adultos de menos de 1 metro)."
+sinonimos = ["altura", "estatura", "talla", "miden", "mide", "imc", "indice de masa corporal"]
+
+[[columnas]]
+nombre = "municipio_unidad_medica"
+alias = "municipio"
+tipo = "categoria"
+descripcion = "Municipio donde está la unidad médica (no donde vive la persona)."
+normalizar = "titulo"
+diccionario = "municipios_nl"
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "institucion_unidad_medica"
+alias = "unidad_medica"
+tipo = "categoria"
+descripcion = "Unidad médica donde se dio la consulta, con su municipio entre paréntesis (hay nombres repetidos en municipios distintos). C S U = Centro de Salud Urbano y C S R = Centro de Salud Rural (abreviaturas probables, sin confirmar)."
+normalizar = "titulo"
+unificar = "sin_signos"         # 'C.S.U. DR. COSS' (2024_2025) y 'C S U  DR  COSS' (2025_2026) son la misma unidad
+compuesta_con = "municipio"     # el valor final es "Nombre (Municipio)"
+conteo_distinto = true          # se puede contar cuántas unidades distintas hay
+expuesta = true
+cuasi_identificador = true
+
+[[columnas]]
+nombre = "clave_grupo_enfermedad"
+alias = "grupo"
+tipo = "codigo"
+etiqueta = "descripcion_grupo_enfermedad"
+descripcion = "Grupo de enfermedad según la CIE-10 (capítulos con números romanos del I al XXII), de acuerdo con el diccionario oficial."
+normalizar = "oracion"
+doble_espacio = "coma"
+diccionario = "grupos_cie10"
+expuesta = true
+
+[[columnas]]
+nombre = "clave_enfermedad"
+alias = "enfermedad"
+tipo = "codigo"
+etiqueta = "descripcion_enfermedad"
+descripcion = "Enfermedad o motivo de la consulta, con clave de la CIE-10 (Clasificación Internacional de Enfermedades), según el diccionario oficial. La 'X' final de algunas claves es relleno."
+normalizar = "oracion"
+doble_espacio = "coma"
+buscable = true
+patron = "^[A-Z][0-9]{2}[0-9A-Z]$"
+expuesta = true
+
+# ---------- Valores especiales ----------
+[[valores_especiales]]
+columna = "grupo"
+valores = ["XXI"]
+etiqueta = "no_es_enfermedad"
+explicacion = "El grupo 'Factores que influyen en el estado de salud y contacto con los servicios de salud' no son enfermedades: son motivos de contacto, como chequeos generales, control del niño sano o supervisión del embarazo."
+
+# ---------- Advertencias propias que el motor agrega según la consulta ----------
+# cuando.siempre | cuando.agrupar_por (lista) | cuando.usa_columna (lista) | cuando.resultado_incluye
+# (las comunes —consulta no es persona, sin tasas— están en data/salud/_comun.toml)
+[[advertencias_condicionales]]
+cuando = { usa_columna = ["sexo"] }
+texto = "El sexo muestra quién usa el servicio (incluye la supervisión del embarazo), no quién se enferma más ni la composición de la población."
+
+[[advertencias_condicionales]]
+cuando = { resultado_incluye = { columna = "grupo", valores = ["XXI"] } }
+texto = "El grupo 'Factores que influyen en el estado de salud' no son enfermedades: incluye chequeos generales, control del niño sano y supervisión del embarazo."
+
+# ---------- Controles de calidad que se reportan en la ingesta ----------
+[[controles_calidad]]
+descripcion = "Adultos (18 años o más) con peso menor a 30 kg"
+columna = "peso"
+operador = "<"
+valor = 30
+solo_si = { columna = "edad", operador = ">=", valor = 18 }
+
+[[controles_calidad]]
+descripcion = "Adultos (18 años o más) con altura menor a 100 cm"
+columna = "altura"
+operador = "<"
+valor = 100
+solo_si = { columna = "edad", operador = ">=", valor = 18 }
+
+[[controles_calidad]]
+descripcion = "Pesos mayores a 250 kg"
+columna = "peso"
+operador = ">"
+valor = 250
+
+[[controles_calidad]]
+descripcion = "Edades mayores a 100 años"
+columna = "edad"
+operador = ">"
+valor = 100
+
+# Valores que deberían aparecer (para detectar faltantes, como un municipio).
+[[valores_esperados]]
+columna = "municipio"
+diccionario = "municipios_nl"
+
+# Relación entre claves (en la CIE-10 cada capítulo usa letras propias).
+[[controles_jerarquia]]
+descripcion = "Primera letra de la clave de enfermedad dentro de cada grupo"
+padre = "grupo"
+hija = "enfermedad"
+caracteres = 1

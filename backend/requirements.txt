@@ -1,0 +1,8 @@
+# Dependencias del backend (versiones probadas con Python 3.14.7).
+fastapi==0.162.0        # servidor web y endpoint /api/chat
+uvicorn==0.54.0         # servidor ASGI local
+duckdb==2.0.0           # base local columnar para las consultas agregadas
+google-genai==2.33.0    # SDK oficial de Google para Gemini (function calling)
+python-dotenv==1.2.4    # lee la configuración de .env
+pytest==9.2.0           # pruebas
+httpx==0.28.1           # cliente de pruebas de FastAPI (TestClient)

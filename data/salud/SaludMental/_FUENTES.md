@@ -1,0 +1,45 @@
+# Fuentes: Salud
+
+## Conjunto de datos: Salud Mental
+- **Nombre del conjunto de datos en el portal:** Salud Mental
+- **Enlace de la página del conjunto de datos:** https://catalogodatos.nl.gob.mx/dataset/salud-mental
+- **Institución que lo publica:** Dirección de Planeación (gerardo.balderas@saludnl.gob.mx)
+- **Mantenedor:** Francisco Antonio Carrizales Cavazos (francisco.carrizales@saludnl.gob.mx)
+- **Fecha de descarga:** 29/10/26
+- **Periodo que cubre (según el portal):** 2024-2025 y 2025-2026
+- **Periodo que cubren los archivos (verificado en los datos el 29/10/26):** del 1 de octubre de 2024 al 30 de septiembre de 2026, **sin datos de septiembre de 2025** (el mismo hueco que Consulta General y Salud Bucal): la publicación 2024-2025 termina el 31/08/2025 y la 2025-2026 empieza el 01/10/2025. **Septiembre de 2026 está incompleto por municipio**: Monterrey baja a una fracción de lo habitual y Cadereyta Jiménez y San Nicolás de los Garza no tienen registros, aunque el total del mes no cae debajo del umbral general. Agosto de 2025 (antes del hueco) y agosto de 2026 pueden tener rezago de captura. La ingesta recalcula todo esto cada vez (ver `build/reporte_ingesta.md`).
+- **Fuente original:** http://www.dgis.salud.gob.mx/contenidos/basesdedatos/bdc_serviciossis_gobmx.html
+- **Qué contiene, en una frase:** Consultas de los servicios de salud mental (hospital de especialidades en salud mental, centros comunitarios de salud mental y adicciones y centros de salud), una fila por consulta, con edad, sexo, municipio y unidad médica, y el diagnóstico clasificado con la CIE-10.
+- **Archivos:**
+  - `2024_2025_salud_mental.csv` (48,224 filas, 01/10/2024 a 31/08/2025). UTF-8 con BOM, sin acentos.
+  - `2025_2026_salud_mental_parte1.csv` (49,999 filas, 01/10/2025 a 11/08/2026) y `parte2.csv` (6,622 filas, 11/08/2026 a 30/09/2026). UTF-8 con BOM, sin acentos.
+  - En total: 104,845 filas; ninguna fila idéntica. Separador coma.
+  - La parte 1 de 2025-2026 trae exactamente 49,999 filas (corte de exportación a 50,000 líneas), pero los identificadores siguen sin saltos entre la parte 1 y la parte 2 (`SM_2026_35999` → `SM_2026_36000`): no falta ninguna fila.
+  - Las mismas 14 columnas en ambos periodos. El archivo 2024-2025 nombra distinto dos: `fecha` y `clave_grupo_ enfermedad` (con un espacio); la edad ya se llama `edad` (no `edad_anos` como en los otros conjuntos). Se unifican en `dataset.toml` (`[archivos.equivalencias]`).
+  - `diccionario_2024_2025_salud_mental.csv`: diccionario de datos oficial. Es documentación, no datos. Usa otros nombres de columna (`edad_años`, `descripción_…`) y dice que la fecha es "datetime UTC-6", pero en los datos viene sin hora (dd/mm/aaaa).
+- **Cobertura geográfica:** solo 16 de los 51 municipios de Nuevo León (donde hay unidades con servicio de salud mental en estos datos). General Escobedo concentra el 40.8% de las consultas porque ahí está el Hospital de Especialidades en Salud Mental, que atiende a personas de todo el estado; le siguen Monterrey (31.4%) y Sabinas Hidalgo (7.3%, Centro de Atención Integral en Salud Mental y Adicciones Zona Norte). Guadalupe tiene 1 consulta y Juárez 34; Cerralvo y China solo aparecen en la publicación 2024-2025.
+- **Diccionario de datos (oficial):**
+  - `fecha`/`fecha_consulta`: fecha de consulta (dd/mm/aaaa, sin hora).
+  - `id_consulta`: identificador de la consulta (no de la persona). La numeración `SM_<año>_n` se reinicia: 14,000 identificadores `SM_2025_*` aparecen en ambas publicaciones con datos distintos (no son duplicados).
+  - `edad`: edad en años. `edad_meses` y `edad_dias` solo traen valores para la edad 0 (así viene en los datos).
+  - `sexo`: el diccionario indica Femenino/Masculino; los datos también traen INTERSEXUAL (56 consultas, en 2 municipios).
+  - `peso` (kg) y `altura` (cm).
+  - `municipio_unidad_medica` e `institucion_unidad_medica`: municipio y nombre de la unidad donde se atendió.
+  - `clave_grupo_enfermedad` / `descripcion_grupo_enfermedad`: grupo de enfermedad según la CIE-10. El grupo V (trastornos mentales y del comportamiento) es el 82.8% de las consultas.
+  - `clave_enfermedad` / `descripcion_enfermedad`: clave de la CIE-10 (482 claves distintas, todas con el formato esperado).
+- **Columnas que no se entienden o códigos sin explicación:**
+  - El grupo XXI (12.2%) no son trastornos: psicoterapia y problemas familiares, de pareja, escolares o legales.
+  - Los grupos XIX y XX son casi todos consultas por maltrato, abuso o violencia (claves T74 y Y05 a Y07), no lesiones.
+  - **Autolesión y suicidio:** no hay claves de lesión autoinfligida intencional (X60 a X84) ni defunciones. Solo hay `Z915` "Historia personal de lesión autoinfligida intencionalmente" (50 consultas, un antecedente) y `R458` "Otros síntomas y signos que involucran el estado emocional" (34; en la CIE-10 incluye la ideación suicida, pero no solo eso). Estas cifras se quedan muy por debajo de la realidad.
+  - Hay 2 envenenamientos por medicamentos (1 consulta cada uno, sin intención registrada).
+  - Diagnósticos de identidad de género y sexualidad (F64 a F66, Z70): 69 consultas. No se consultan por separado.
+- **Problemas que notaste:**
+  - **¿Una fila es una visita?** 1,589 filas son idénticas en todo salvo el identificador, y hay visitas (misma fecha, unidad, edad, sexo, peso y altura) con varias filas, unas con diagnósticos distintos y otras con el mismo. Además, en salud mental una misma persona tiene muchas consultas de seguimiento. Se conservan todas y se habla de "consultas registradas".
+  - **Riesgo de reidentificación:** el peso y la altura, junto con la edad, el sexo y el municipio, funcionan como una huella: 12,785 perfiles aparecen en más de una fecha (uno en 93 fechas distintas). Por eso peso, altura y unidad médica se usan en los controles de la ingesta y luego se borran de la base. El cruce de municipio, edad, sexo y diagnóstico deja 7,020 combinaciones con una sola consulta: esos cruces se bloquean (`[[privacidad.bloqueos]]`) y el mínimo de privacidad sube a 10 consultas (20 al cruzar municipio y edad).
+  - `peso` y `altura`: 5,322 y 5,338 traen el texto `null`, y 418 y 419 el texto `sin valor`; 1,155 adultos con menos de 30 kg y 1,455 con menos de 100 cm; 5 pesos mayores a 250 kg.
+  - `edad`: 4 mayores de 100 años (máximo: 118). Hay diagnósticos imposibles a esa edad (por ejemplo, depresión o maltrato de pareja en bebés de días de nacidos): errores de captura.
+  - 185 claves tienen menos de 10 consultas en todo el periodo: no se listan ni se consultan por separado.
+  - Las unidades se escriben distinto en cada periodo (`CSU CROC B` contra `C S U  CROC B`); "CSU TIERRA LIBERTAD" solo aparece en 2024-2025 y "CENTRO COMUNITARIO DE SALUD MENTAL" solo en 2025-2026 (quizá la misma unidad con otro nombre; no se puede confirmar).
+  - Tres claves cambian de descripción entre publicaciones (con y sin guion): F428, F429 y F512. Erratas de origen: "DEPENDENDENCIA" (F192), "CIRCUNSTANCIANCIAS" (Z658), "FOCALESPARCIALES" (G400 a G402). Doble espacio en "DEMENCIA  NO ESPECIFICADA" (F03X).
+  - El 24.0% de las consultas son de menores de 18 años.
+  - Son registros distintos de Consulta General: solo 349 filas coinciden en fecha, municipio, unidad, edad, sexo, peso, altura y diagnóstico, aunque 27 de sus 35 unidades también aparecen allá y Consulta General también tiene diagnósticos de salud mental. No se suman ni se comparan.

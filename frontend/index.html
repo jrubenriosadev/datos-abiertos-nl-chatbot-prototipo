@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pregunta a los datos · Prototipo</title>
+  <meta name="description" content="Maqueta de un asistente que responde preguntas sobre datos abiertos de Nuevo León con lenguaje sencillo y gráficas.">
+
+  <!-- Tipografías: si no hay internet, el navegador usa las fuentes del sistema. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="chat-widget.css">
+
+  <style>
+    :root {
+      --ink: #17282B;
+      --teal: #0E7C74;
+      --teal-dark: #0A5A54;
+      --sun: #F4B942;
+      --mist: #E8F0EE;
+      --paper: #FBFCFB;
+      --line: #C9D8D5;
+      --muted: #4A5E61;
+
+      --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+      --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 1.125rem;
+      line-height: 1.6;
+    }
+
+    a { color: var(--teal-dark); }
+    a:hover { color: var(--ink); }
+
+    :focus-visible {
+      outline: 3px solid var(--ink);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    .wrap {
+      width: min(1080px, 100% - 40px);
+      margin-inline: auto;
+    }
+
+    /* ---------- Aviso de prototipo (siempre visible) ---------- */
+    .proto-bar {
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.95rem;
+      padding: 10px 0;
+    }
+    .proto-bar .wrap { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+    .proto-bar strong { color: var(--sun); }
+
+    /* ---------- Encabezado ---------- */
+    .site-header { border-bottom: 1px solid var(--line); background: #fff; }
+    .site-header .wrap {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; padding-block: 16px; flex-wrap: wrap;
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.35rem;
+      color: var(--ink);
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .brand-mark {
+      width: 28px; height: 28px; border-radius: 50% 50% 50% 4px;
+      background: var(--teal);
+      display: inline-block;
+      position: relative;
+    }
+    .brand-mark::after {
+      content: ""; position: absolute; inset: 8px; border-radius: 50%; background: var(--sun);
+    }
+    .site-nav { display: flex; gap: 22px; flex-wrap: wrap; }
+    .site-nav a { color: var(--ink); text-decoration: none; padding: 4px 0; border-bottom: 2px solid transparent; }
+    .site-nav a:hover { border-bottom-color: var(--teal); }
+
+    /* ---------- Portada ---------- */
+    .hero { padding: clamp(48px, 9vw, 110px) 0 clamp(40px, 7vw, 80px); background: linear-gradient(180deg, var(--mist) 0%, var(--paper) 100%); }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.4rem, 6.4vw, 4.6rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin: 0 0 20px;
+      max-width: 16ch;
+    }
+    .hero p.lead { max-width: 56ch; color: var(--muted); margin: 0 0 36px; font-size: 1.2rem; }
+
+    .ask-form { max-width: 760px; }
+    .ask-label { display: block; font-weight: 700; margin-bottom: 8px; }
+    .ask-row {
+      display: flex; gap: 0; border-bottom: 5px solid var(--sun); background: #fff;
+      box-shadow: 0 1px 0 var(--line);
+    }
+    .ask-row input {
+      flex: 1; min-width: 0; border: 0; background: transparent;
+      font: inherit; font-size: clamp(1.1rem, 2.6vw, 1.5rem);
+      padding: 18px 16px; color: var(--ink);
+    }
+    .ask-row input::placeholder { color: #6B7E81; }
+    .ask-row input:focus-visible { outline-offset: -3px; }
+    .ask-row button {
+      border: 0; background: var(--teal); color: #fff; cursor: pointer;
+      font: inherit; font-weight: 700; font-size: 1.1rem; padding: 0 28px;
+    }
+    .ask-row button:hover { background: var(--teal-dark); }
+
+    .examples { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .examples span { color: var(--muted); margin-right: 4px; }
+    .chip {
+      font: inherit; font-size: 1rem; cursor: pointer; text-align: left;
+      background: #fff; color: var(--ink);
+      border: 1.5px solid var(--teal); border-radius: 999px; padding: 8px 16px;
+    }
+    .chip:hover { background: var(--teal); color: #fff; }
+
+    /* ---------- Temas disponibles ---------- */
+    section.block { padding: clamp(48px, 7vw, 88px) 0; }
+    section.block h2 {
+      font-family: var(--font-display); font-weight: 800;
+      font-size: clamp(1.7rem, 3.6vw, 2.5rem); line-height: 1.1;
+      letter-spacing: -0.01em; margin: 0 0 12px;
+    }
+    section.block .intro { color: var(--muted); max-width: 60ch; margin: 0 0 40px; }
+
+    .topics { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
+    .topic {
+      display: grid; grid-template-columns: minmax(180px, 1fr) 2.2fr; gap: 12px 40px;
+      padding: 30px 0; border-bottom: 1px solid var(--line);
+    }
+    .topic h3 {
+      font-family: var(--font-display); font-weight: 800; font-size: 1.9rem; margin: 0;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .topic h3 .dot { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+    .topic:nth-child(1) .dot { background: var(--teal); }
+    .topic:nth-child(2) .dot { background: var(--sun); }
+    .topic:nth-child(3) .dot { background: var(--ink); }
+    .topic p { margin: 0 0 14px; max-width: 58ch; }
+    .topic .examples { margin-top: 0; }
+    .topic .tag {
+      display: inline-block; font-family: var(--font-body); font-size: 0.85rem; font-weight: 700;
+      background: var(--mist); color: var(--muted); border: 1px solid var(--line);
+      border-radius: 999px; padding: 2px 12px; margin-left: 4px;
+    }
+    .topic.soon h3, .topic.soon p { color: var(--muted); }
+    /* Un tema con varios conjuntos de datos (por ejemplo, Salud) */
+    .topic .dataset + .dataset { margin-top: 22px; padding-top: 22px; border-top: 1px dashed var(--line); }
+    .topic h4 { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; margin: 0 0 6px; }
+    .topic .periodo { color: var(--muted); }
+    /* Línea de apoyo del conjunto de salud mental (el texto y los teléfonos llegan de /api/salud). */
+    .topic .apoyo { font-size: 0.95rem; background: var(--mist); border-left: 4px solid var(--teal); padding: 10px 14px; border-radius: 6px; }
+    .topic .apoyo:empty { display: none; }
+
+    /* ---------- Cómo funciona ---------- */
+    .how { background: var(--ink); color: #fff; }
+    .how h2 { color: #fff; }
+    .how .intro { color: #C7D6D3; }
+    .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 28px; grid-template-columns: repeat(3, 1fr); counter-reset: step; }
+    .steps li { counter-increment: step; border-top: 4px solid var(--sun); padding-top: 18px; }
+    .steps li::before {
+      content: counter(step); display: block;
+      font-family: var(--font-display); font-weight: 800; font-size: 2.6rem; color: var(--sun); line-height: 1; margin-bottom: 10px;
+    }
+    .steps h3 { font-family: var(--font-display); font-size: 1.3rem; margin: 0 0 6px; }
+    .steps p { margin: 0; color: #DCE7E5; }
+
+    /* ---------- Pie ---------- */
+    .site-footer { padding: 36px 0 120px; color: var(--muted); font-size: 0.98rem; }
+    .site-footer .wrap { border-top: 1px solid var(--line); padding-top: 24px; max-width: 1080px; }
+    .site-footer p { margin: 0 0 8px; max-width: 70ch; }
+
+    @media (max-width: 760px) {
+      .topic { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .ask-row { flex-direction: column; }
+      .ask-row button { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="proto-bar" role="note">
+    <div class="wrap">
+      <strong>Prototipo de propuesta.</strong>
+      <span>Esta página es una maqueta y no es el sitio oficial del Gobierno de Nuevo León.</span>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="#inicio"><span class="brand-mark" aria-hidden="true"></span>Pregunta a los datos</a>
+      <nav class="site-nav" aria-label="Principal">
+        <a href="#temas">Temas</a>
+        <a href="#como-funciona">Cómo funciona</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <section class="hero">
+      <div class="wrap">
+        <h1>Pregunta lo que quieras saber de Nuevo León.</h1>
+        <p class="lead">Escribe tu duda con tus propias palabras. El asistente busca en los datos abiertos del estado y te responde con cifras claras, una explicación sencilla y gráficas.</p>
+
+        <form class="ask-form" id="ask-form" autocomplete="off">
+          <label class="ask-label" for="ask-input">¿Qué quieres saber?</label>
+          <div class="ask-row">
+            <input id="ask-input" name="q" type="text" maxlength="500" placeholder="Por ejemplo: ¿por qué motivos se consulta más en Monterrey?">
+            <button type="submit">Preguntar</button>
+          </div>
+        </form>
+
+        <div class="examples" role="group" aria-label="Preguntas de ejemplo">
+          <span>Prueba con:</span>
+          <button class="chip" type="button" data-ask="¿Por qué motivos se consulta más en Monterrey?">¿Por qué motivos se consulta más en Monterrey?</button>
+          <button class="chip" type="button" data-ask="¿Cuántas consultas hubo cada mes?">¿Cuántas consultas hubo cada mes?</button>
+          <button class="chip" type="button" data-ask="¿Qué enfermedades son más comunes en personas de 60 años o más?">¿Qué enfermedades son más comunes a partir de los 60 años?</button>
+          <button class="chip" type="button" data-ask="¿Cuáles son los problemas dentales más comunes?">¿Cuáles son los problemas dentales más comunes?</button>
+          <button class="chip" type="button" data-ask="¿Cuáles son los diagnósticos de salud mental más comunes?">¿Cuáles son los diagnósticos de salud mental más comunes?</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="temas">
+      <div class="wrap">
+        <h2>Lo que puedes consultar en este prototipo</h2>
+        <p class="intro">Por ahora el asistente trabaja con un tema, Salud, que tiene tres conjuntos de datos. Cada respuesta usa uno solo y te dice cuál. Si preguntas por algo que no está en los datos, te lo dirá en lugar de inventarlo.</p>
+
+        <ul class="topics">
+          <li class="topic">
+            <h3><span class="dot" aria-hidden="true"></span>Salud</h3>
+            <div>
+              <div class="dataset">
+                <h4>Consulta general y especialidades</h4>
+                <p>Consultas generales y de especialidad registradas en unidades médicas de Nuevo León, por municipio, motivo, edad y sexo.<span class="periodo" data-periodo="salud_consulta_general"></span> Los últimos meses pueden estar incompletos.</p>
+                <div class="examples">
+                  <button class="chip" type="button" data-ask="¿Cuáles son los motivos de consulta más frecuentes en el estado?">¿Cuáles son los motivos de consulta más frecuentes?</button>
+                  <button class="chip" type="button" data-ask="¿Qué municipios tienen más consultas por diabetes?">¿Qué municipios tienen más consultas por diabetes?</button>
+                </div>
+              </div>
+              <div class="dataset">
+                <h4>Salud bucal</h4>
+                <p>Consultas del servicio dental: caries, encías, revisiones y otros diagnósticos de boca y dientes, por municipio, edad, sexo y mes. Muchas son de niñas y niños, así que los cruces de edad y municipio solo se muestran con grupos grandes.<span class="periodo" data-periodo="salud_bucal"></span></p>
+                <div class="examples">
+                  <button class="chip" type="button" data-ask="¿Cuáles son los problemas dentales más comunes en niñas y niños de 5 a 9 años?">¿Cuáles son los problemas dentales más comunes en niñas y niños de 5 a 9 años?</button>
+                  <button class="chip" type="button" data-ask="¿Cuántas consultas dentales hubo cada mes?">¿Cuántas consultas dentales hubo cada mes?</button>
+                </div>
+              </div>
+              <div class="dataset">
+                <h4>Salud mental</h4>
+                <p>Consultas de los servicios de salud mental: ansiedad, depresión, consumo de sustancias y otros diagnósticos, por edad, sexo, municipio y mes. Son atenciones registradas, no la cantidad de personas que viven con un trastorno: muchas personas no buscan atención. Por privacidad, los cruces solo se muestran con grupos grandes y los temas sensibles, como la autolesión, solo en totales.<span class="periodo" data-periodo="salud_mental"></span></p>
+                <p class="apoyo" data-apoyo></p>
+                <div class="examples">
+                  <button class="chip" type="button" data-ask="¿Cuáles son los diagnósticos de salud mental más comunes en adolescentes de 15 a 19 años?">¿Cuáles son los diagnósticos de salud mental más comunes en adolescentes?</button>
+                  <button class="chip" type="button" data-ask="¿Cuántas consultas de salud mental hubo cada mes?">¿Cuántas consultas de salud mental hubo cada mes?</button>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="topic soon">
+            <h3><span class="dot" aria-hidden="true"></span>Educación <span class="tag">Próximamente</span></h3>
+            <div>
+              <p>Escuelas, alumnos y docentes por nivel y municipio.</p>
+            </div>
+          </li>
+          <li class="topic soon">
+            <h3><span class="dot" aria-hidden="true"></span>Seguridad <span class="tag">Próximamente</span></h3>
+            <div>
+              <p>Incidentes y denuncias registrados, con su evolución en el tiempo y por zona.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block how" id="como-funciona">
+      <div class="wrap">
+        <h2>Cómo funciona</h2>
+        <p class="intro">No necesitas descargar archivos ni usar filtros.</p>
+        <ol class="steps">
+          <li>
+            <h3>Preguntas</h3>
+            <p>Escribes tu duda como se la harías a una persona.</p>
+          </li>
+          <li>
+            <h3>Se consultan los datos</h3>
+            <p>El asistente busca la información exacta en los conjuntos de datos abiertos.</p>
+          </li>
+          <li>
+            <h3>Recibes la respuesta</h3>
+            <p>Te da las cifras, qué significan, sus límites y de qué conjunto de datos salieron. Si ayuda, añade una gráfica.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Maqueta creada para presentar una propuesta. No pertenece ni representa al Gobierno del Estado de Nuevo León.</p>
+      <p>Los datos provienen del portal de datos abiertos del Gobierno del Estado de Nuevo León. Cada respuesta indicará el conjunto de datos y el periodo que usó.</p>
+    </div>
+  </footer>
+
+  <!-- Configuración del widget (todo es opcional; ver frontend/README.md) -->
+  <script>
+    window.DatosChatConfig = {
+      apiUrl: "http://localhost:8000/api/chat",
+      // avatarUrl: "../assets/mascota.png",   // se activa cuando agregues el personaje
+      subtitle: "Consultas médicas, dentales y de salud mental de Nuevo León",
+      welcome: "Hola. Puedo ayudarte a encontrar y entender los datos abiertos de salud de Nuevo León: consultas generales y de especialidad, de salud bucal (dentales) y de salud mental.\n\nEscribe tu pregunta con tus propias palabras. Solo explico datos: no doy consejos médicos ni hago de terapeuta. Si estás pasando por un momento difícil, escríbelo y te diré a dónde puedes llamar.",
+      examples: [
+        "¿Por qué motivos se consulta más en Monterrey?",
+        "¿Cuáles son los problemas dentales más comunes?",
+        "¿Cuántas consultas de salud mental hubo cada mes?"
+      ]
+    };
+  </script>
+  <script src="chat-widget.js" defer></script>
+
+  <!-- Conecta la página demo con el widget -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var form = document.getElementById("ask-form");
+      var input = document.getElementById("ask-input");
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var text = input.value.trim();
+        if (!text) { input.focus(); return; }
+        window.DatosChat.ask(text);
+        input.value = "";
+      });
+
+      // Periodo de cada conjunto de datos, calculado de los datos (no escrito a mano). Se busca por id.
+      if (location.protocol !== "file:" && window.fetch) {
+        fetch("/api/salud").then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+          ((d && d.datasets) || []).forEach(function (ds) {
+            var span = document.querySelector('[data-periodo="' + ds.id + '"]');
+            if (span && ds.periodo) span.textContent = " Periodo disponible: " + ds.periodo + ".";
+          });
+          // Línea de apoyo (texto y teléfonos de config/crisis.toml, nunca escritos en la página).
+          if (d && d.apoyo && d.apoyo.texto) {
+            document.querySelectorAll("[data-apoyo]").forEach(function (p) { p.textContent = d.apoyo.texto; });
+          }
+        }).catch(function () { /* sin backend: la página funciona igual */ });
+      }
+
+      document.querySelectorAll("[data-ask]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          window.DatosChat.ask(btn.getAttribute("data-ask"));
+        });
+      });
+    });
+  </script>
+</body>
+</html>

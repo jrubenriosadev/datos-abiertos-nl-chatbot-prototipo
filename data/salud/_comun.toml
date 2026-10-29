@@ -1,0 +1,115 @@
+# ==========================================================
+# Reglas comunes de la categoría Salud. La ingesta (backend/ingest.py) las une a cada
+# dataset de data/salud/: las listas van primero las comunes y luego las del dataset;
+# en las tablas ([privacidad], [completitud], [unidad], [edad]) gana lo que diga el dataset.
+# Aquí solo va lo que vale para TODOS los datasets de Salud; lo propio de cada uno
+# vive en su dataset.toml.
+# Claves permitidas: reglas_interpretacion, datos_no_disponibles, advertencias_condicionales,
+# valores_especiales, siglas, unidad, privacidad, completitud, edad, temas_restringidos,
+# valores_no_disponibles, lenguaje_evitar.
+# ==========================================================
+
+# ---------- Lenguaje que nunca debe aparecer en una respuesta (se compara sin acentos) ----------
+# Si el modelo lo usa, se le pide reescribir una vez; si insiste, se muestra un mensaje fijo.
+lenguaje_evitar = [
+  "enfermos mentales", "enfermo mental", "enferma mental", "locos", "loco", "trastornados", "trastornadas",
+  "esquizofrenicos", "drogadictos", "drogadicto", "drogadicta", "viciosos", "los suicidas", "cometer suicidio",
+  "cometio suicidio", "cometieron suicidio", "suicidio exitoso", "intento fallido", "epidemia de"
+]
+
+# ---------- Lo que NO hay en los datos (se le explica al modelo) ----------
+datos_no_disponibles = [
+  "Población o número de habitantes: no se pueden calcular tasas.",
+  "Identificador de persona: no se puede saber cuántas personas distintas consultaron.",
+  "Municipio de residencia: solo se sabe dónde está la unidad médica.",
+  "Peso y altura: excluidos por su baja calidad.",
+  "Datos de consultas individuales: solo se entregan totales agrupados.",
+  "Resultados, tratamientos, medicamentos o costos de las consultas."
+]
+
+# ---------- Reglas de interpretación (se entregan al modelo como contexto) ----------
+reglas_interpretacion = [
+  "Cada registro es una CONSULTA, no una persona. Habla siempre de 'consultas'; nunca de 'pacientes', 'enfermos', 'personas atendidas' ni 'casos'. No hay identificador de persona: una misma persona puede tener muchas consultas.",
+  "Cada conjunto de datos de Salud es un registro distinto (otro servicio y otra captura). Responde cada pregunta con un solo conjunto: no sumes, restes ni compares cifras de conjuntos distintos, ni de esta respuesta ni de respuestas anteriores. Si piden comparar o juntar conjuntos, explica que todavía no se pueden cruzar y ofrece consultar cada uno por separado.",
+  "El grupo XXI ('Factores que influyen en el estado de salud y contacto con los servicios de salud') no son enfermedades: son chequeos, revisiones y otros motivos de contacto (los ejemplos de cada conjunto están en valores_especiales). Si preguntan por las enfermedades más comunes (en general o de un grupo de edad, sexo, municipio o mes), consulta agrupando por 'enfermedad' (no por 'grupo', salvo que pidan grupos o categorías) con el filtro grupo no_en ['XXI'], muestra ese ranking y explica la diferencia en una frase. Puedes mencionar aparte cuántas consultas son de ese grupo.",
+  "El grupo XVIII son síntomas y signos, no diagnósticos confirmados.",
+  "No hay datos de población, así que no hay tasas. Monterrey tiene más consultas porque tiene más habitantes. Al comparar municipios por cifras absolutas, adviértelo y, cuando ayude, ofrece comparar porcentajes dentro de cada municipio (agregación 'proporcion' con proporcion_dentro_de = 'municipio').",
+  "Indica siempre el periodo real cubierto. Si preguntan por 'este año', 'el año pasado' o un año completo, aclara qué meses de ese año hay en los datos (puede faltar alguno) y no lo presentes como un total anual completo. Repite las advertencias de meses incompletos.",
+  "Algunos meses no tienen datos (estado 'sin_datos' en describir_dataset): no significa que hubo cero consultas; dilo así y no los compares con los demás.",
+  "El sexo refleja quién usa el servicio, no la composición de la población. No concluyas quién 'se enferma más'.",
+  "Peso y altura no están disponibles por su baja calidad. Si preguntan por ellos, explica por qué.",
+  "Privacidad: solo hay totales agrupados. Los grupos con menos consultas que el mínimo de privacidad del conjunto (ver 'privacidad' en describir_dataset) se juntan en 'Otros (grupos pequeños)' o se ocultan; avísalo. Nunca intentes estrechar una consulta hasta identificar a una persona.",
+  "Sin consejos médicos ni odontológicos: no diagnostiques, no recomiendes tratamientos, medicamentos ni cuidados, y no interpretes síntomas de nadie. Solo explicas datos.",
+  "El municipio es donde está la unidad médica, no donde vive la persona.",
+  "Las claves de enfermedad son de la CIE-10 (lo confirma el diccionario oficial de cada conjunto). Para encontrar las claves de una enfermedad usa buscar_valores; varias claves pueden corresponder a una misma enfermedad (por ejemplo, distintos tipos de diabetes o de caries). Cuando sumes varias claves con el operador 'en', di en la respuesta qué incluiste con palabras (por ejemplo, 'todos los tipos de diabetes tipo 2, con y sin complicaciones') y no agregues claves de otras enfermedades. No muestres las claves (como I10X) salvo que la persona pida claves o códigos: usa siempre el nombre de la enfermedad."
+]
+
+[unidad]
+singular = "consulta"
+plural = "consultas"
+
+[privacidad]
+minimo_por_grupo = 5          # grupos con menos consultas se agrupan u ocultan
+max_filtros_estrechos = 2     # más filtros "estrechos" sobre cuasi-identificadores → rechazo
+
+[completitud]
+umbral_dia_habil = 0.5        # mes "incompleto" si su promedio por día hábil < 50% de la mediana de los meses previos
+meses_rezago = 2              # los meses más recientes se marcan como "posible rezago de captura"
+rezago_antes_de_hueco = true  # el mes justo antes de un mes sin datos también (fin de una publicación)
+
+[edad]
+columna = "edad"
+# Grupos de edad de los anuarios de morbilidad de la DGIS: [etiqueta, mínimo, máximo] en años.
+rangos = [
+  ["Menores de 1 año", 0, 0],
+  ["1 a 4 años", 1, 4],
+  ["5 a 9 años", 5, 9],
+  ["10 a 14 años", 10, 14],
+  ["15 a 19 años", 15, 19],
+  ["20 a 24 años", 20, 24],
+  ["25 a 44 años", 25, 44],
+  ["45 a 49 años", 45, 49],
+  ["50 a 59 años", 50, 59],
+  ["60 a 64 años", 60, 64],
+  ["65 años y más", 65, 150]
+]
+
+# ---------- Valores especiales comunes ----------
+[[valores_especiales]]
+columna = "grupo"
+valores = ["XVIII"]
+etiqueta = "sintomas"
+explicacion = "El grupo 'Síntomas, signos y hallazgos anormales' agrupa molestias o hallazgos sin un diagnóstico definido, no enfermedades confirmadas."
+
+# ---------- Advertencias comunes que el motor agrega según la consulta ----------
+[[advertencias_condicionales]]
+cuando = { siempre = true }
+texto = "Cada registro es una consulta, no una persona: una misma persona puede tener varias consultas."
+
+[[advertencias_condicionales]]
+cuando = { agrupar_por = ["municipio", "unidad_medica"] }
+texto = "No hay datos de población, así que no se pueden calcular tasas: un municipio con más habitantes tiene más consultas. Para comparar municipios conviene usar el porcentaje dentro de cada municipio."
+
+[[advertencias_condicionales]]
+cuando = { resultado_incluye = { columna = "enfermedad", valores = ["Z915", "R458"] } }
+texto = "La 'historia personal de lesión autoinfligida' es un antecedente anotado en la consulta, no un intento reciente ni una muerte, y 'otros síntomas del estado emocional' incluye, entre otras cosas, las ideas suicidas. Estas cifras se quedan muy por debajo de la realidad: muchas personas no buscan atención y, cuando la idea suicida forma parte de un trastorno, se registra con el diagnóstico del trastorno."
+
+# ---------- Temas restringidos (valen para todos los datasets de Salud) ----------
+# Si una consulta filtra uno de estos valores, solo se puede cruzar con columnas_permitidas (sin lugar,
+# fecha ni mes: nada de rankings por municipio). Si agrupa por la columna del tema junto con otras
+# columnas, esos valores se juntan en "Otros". linea_apoyo = true: el backend agrega al final de la
+# respuesta la línea fija de config/crisis.toml. 'palabras' detecta el tema en la pregunta.
+[[temas_restringidos]]
+id = "autolesion"
+nombre = "autolesión y suicidio"
+columna = "enfermedad"
+claves = ["Z915", "R458", "Y870", "U941"]
+prefijos = ["X6", "X7", "X80", "X81", "X82", "X83", "X84"]
+columnas_permitidas = ["sexo", "rango_edad", "edad", "grupo"]
+linea_apoyo = true
+palabras = [
+  "suicidio", "suicidios", "suicida", "suicidas", "suicidarse", "suicidan", "suicido", "autolesion", "autolesiones",
+  "autolesionarse", "autoinfligida", "autoinfligidas", "autoinfligido", "ideacion suicida", "ideas suicidas",
+  "quitarse la vida", "se quitan la vida", "hacerse dano", "cortarse", "se cortan"
+]
+indicaciones = "Tema sensible: da solo cifras agregadas y su contexto, sin métodos, medios, casos concretos ni rankings. Nunca presentes el suicidio como solución ni como algo inevitable; puedes decir que pedir ayuda funciona. No escribas teléfonos: la línea de apoyo la agrega el sistema."

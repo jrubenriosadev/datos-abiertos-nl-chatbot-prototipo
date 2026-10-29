@@ -1,0 +1,33 @@
+# ==========================================================
+# Diccionario verificado: títulos de los capítulos de la CIE-10 en español
+# (OPS, Clasificación Estadística Internacional de Enfermedades, 10.ª revisión),
+# escritos con las mismas palabras que traen los datos y solo con acentos y signos restaurados.
+# La ingesta comprueba que cada valor, sin acentos ni signos, sea idéntico a su clave.
+# ==========================================================
+
+nombre = "Capítulos de la CIE-10"
+fuente = "OPS, CIE-10, Volumen 1 (títulos de capítulo)"
+
+[valores]
+"CIERTAS ENFERMEDADES INFECCIOSAS Y PARASITARIAS" = "Ciertas enfermedades infecciosas y parasitarias"
+"TUMORES NEOPLASIAS" = "Tumores (neoplasias)"
+"ENFERMEDADES DE LA SANGRE Y DE LOS ORGANOS HEMATOPOYETICOS Y CIERTOS TRASTORNOS QUE AFECTAN EL MECANISMO DE LA INMUNIDAD" = "Enfermedades de la sangre y de los órganos hematopoyéticos, y ciertos trastornos que afectan el mecanismo de la inmunidad"
+"ENFERMEDADES ENDOCRINAS NUTRICIONALES Y METABOLICAS" = "Enfermedades endocrinas, nutricionales y metabólicas"
+"TRASTORNOS MENTALES Y DEL COMPORTAMIENTO" = "Trastornos mentales y del comportamiento"
+"ENFERMEDADES DEL SISTEMA NERVIOSO" = "Enfermedades del sistema nervioso"
+"ENFERMEDADES DEL OJO Y SUS ANEXOS" = "Enfermedades del ojo y sus anexos"
+"ENFERMEDADES DE OIDO Y DE LA APOFISIS MASTOIDES" = "Enfermedades de oído y de la apófisis mastoides"
+"ENFERMEDADES DEL SISTEMA CIRCULATORIO" = "Enfermedades del sistema circulatorio"
+"ENFERMEDADES DEL SISTEMA RESPIRATORIO" = "Enfermedades del sistema respiratorio"
+"ENFERMEDADES DEL SISTEMA DIGESTIVO" = "Enfermedades del sistema digestivo"
+"ENFERMEDADES DE LA PIEL Y DEL TEJIDO SUBCUTANEO" = "Enfermedades de la piel y del tejido subcutáneo"
+"ENFERMEDADES DEL SISTEMA OSTEOMUSCULAR Y DEL TEJIDO CONJUNTIVO" = "Enfermedades del sistema osteomuscular y del tejido conjuntivo"
+"ENFERMEDADES DEL SISTEMA GENITOURINARIO" = "Enfermedades del sistema genitourinario"
+"EMBARAZO PARTO Y PUERPERIO" = "Embarazo, parto y puerperio"
+"CIERTAS AFECCIONES ORIGINADAS EN EL PERIODO PERINATAL" = "Ciertas afecciones originadas en el periodo perinatal"
+"MALFORMACIONES CONGENITAS DEFORMIDADES Y ANOMALIAS CROMOSOMICAS" = "Malformaciones congénitas, deformidades y anomalías cromosómicas"
+"SINTOMAS SIGNOS Y HALLAZGOS ANORMALES CLINICOS Y DE LABORATORIO NO CLASIFICADOS EN OTRA PARTE" = "Síntomas, signos y hallazgos anormales clínicos y de laboratorio, no clasificados en otra parte"
+"TRAUMATISMOS ENVENENAMIENTOS Y ALGUNAS OTRAS CONSECUENCIAS DE CAUSAS EXTERNAS" = "Traumatismos, envenenamientos y algunas otras consecuencias de causas externas"
+"CAUSAS EXTERNAS DE MORBILIDAD Y MORTALIDAD" = "Causas externas de morbilidad y mortalidad"
+"FACTORES QUE INFLUYEN EN EL ESTADO DE SALUD Y CONTACTO CON LOS SERVICIOS DE SALUD" = "Factores que influyen en el estado de salud y contacto con los servicios de salud"
+"CAUSAS PARA PROPOSITOS ESPECIALES" = "Causas para propósitos especiales"
